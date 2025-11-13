@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="sdcb.ai - 服务.NET，构建卓越。为.NET生态提供全栈AI解决方案，从底层推理引擎到企业级AI应用。">
+    <meta name="keywords" content="sdcb, .NET, AI, PaddleSharp, OpenVINO, Sdcb Chats, Microsoft MVP">
+    <title>sdcb.ai - 服务.NET，构建卓越</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <span class="brand-logo">sdcb</span>
+                <span class="brand-tagline">.ai</span>
+            </div>
+            <div class="nav-links">
+                <a href="#products" class="nav-link">产品</a>
+                <a href="#infrastructure" class="nav-link">基础设施</a>
+                <a href="#about" class="nav-link">关于我们</a>
+                <a href="https://www.cnblogs.com/sdcb" target="_blank" class="nav-link">博客</a>
+                <a href="https://hub.docker.com/u/sdcb" target="_blank" class="nav-link">Docker Hub</a>
+                <a href="https://github.com/sdcb" target="_blank" class="nav-link-primary">GitHub</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Section 1: Hero -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <span class="badge-icon">🏆</span>
+                    <span>由微软 MVP ZHOU Jie 创立并维护</span>
+                </div>
+                <h1 class="hero-title">
+                    为.NET构建<span class="gradient-text">全栈AI动力</span>
+                </h1>
+                <p class="hero-subtitle">
+                    从底层推理引擎到企业级AI应用，sdcb 为.NET 开发者提供连接AI时代的高性能技术栈
+                </p>
+                <div class="hero-cta">
+                    <a href="#products" class="btn btn-primary">
+                        <span>了解旗舰产品：Sdcb Chats</span>
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                    <a href="https://github.com/sdcb" target="_blank" class="btn btn-secondary">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 0C4.477 0 0 4.477 0 10c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0110 4.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C17.137 18.165 20 14.418 20 10c0-5.523-4.477-10-10-10z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>浏览 GitHub 开源项目</span>
+                    </a>
+                </div>
+                <div class="stats-caption">Sdcb Chats 项目指标</div>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">19+</div>
+                        <div class="stat-label">AI 模型服务商</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">400+</div>
+                        <div class="stat-label">GitHub Stars</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">2,000+</div>
+                        <div class="stat-label">代码提交</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">15k+</div>
+                        <div class="stat-label">Docker Pulls</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="hero-bg">
+            <div class="bg-gradient"></div>
+            <div class="bg-grid"></div>
+        </div>
+    </section>
+
+    <!-- Section 2: Brand Mission -->
+    <section class="mission">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">我们的理念</h2>
+                <p class="section-subtitle">Serving Dotnet, Constructing Brilliant</p>
+            </div>
+            <div class="mission-content">
+                <div class="mission-text">
+                    <p class="mission-description">
+                        我们不仅是.NET的追随者，更是.NET生态的建设者。sdcb 致力于构建关键的技术桥梁，
+                        让.NET开发者能够无缝访问最前沿的AI和高性能计算能力。
+                    </p>
+                    <p class="mission-description">
+                        从企业级AI应用到底层推理引擎，从多媒体处理到高精度计算，我们为.NET社区提供经过
+                        实战验证的全栈式解决方案，帮助开发者"构建卓越"。
+                    </p>
+                </div>
+                <div class="mission-visual">
+                    <div class="visual-card">
+                        <div class="visual-icon">🎯</div>
+                        <h3>服务.NET</h3>
+                        <p>深耕.NET生态，为开发者提供最需要的技术能力</p>
+                    </div>
+                    <div class="visual-card">
+                        <div class="visual-icon">🚀</div>
+                        <h3>构建卓越</h3>
+                        <p>追求技术卓越，打造企业就绪的高性能解决方案</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 3: Flagship Product -->
+    <section id="products" class="flagship-product">
+        <div class="container">
+            <div class="product-layout">
+                <div class="product-info">
+                    <div class="product-badge">旗舰产品</div>
+                    <h2 class="product-title">企业级AI应用：<br><span class="gradient-text">Sdcb Chats</span></h2>
+                    <p class="product-description">
+                        一个用户友好、企业就绪的AI界面，专为私有化部署和企业级管理而设计。
+                        为企业提供安全、可控、高效的AI对话解决方案。
+                    </p>
+                    
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <path d="M9 11L12 14L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M21 12V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div class="feature-text">
+                                <h3>一站式管理</h3>
+                                <p>统一管理超过19家主流AI模型服务商（如 Ollama、OpenAI、DeepSeek、腾讯混元、阿里通义千问等）</p>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M3 9H21" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M9 21V9" stroke="currentColor" stroke-width="2"/>
+                                </svg>
+                            </div>
+                            <div class="feature-text">
+                                <h3>企业就绪</h3>
+                                <p>支持一键Docker部署、灵活的数据库（SQLite/SQL Server/PostgreSQL）与文件服务（S3/Azure Blob），以及 Keycloak SSO 单点登录。可在
+                                    <a href="https://hub.docker.com/u/sdcb" target="_blank" rel="noopener">Docker Hub</a>
+                                    获取官方镜像。
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                            <div class="feature-text">
+                                <h3>标准协议</h3>
+                                <p>内置基于OpenAI协议的API网关，完美兼容现有AI生态，轻松集成到您的应用中</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="product-cta">
+                        <a href="https://github.com/sdcb/chats" target="_blank" class="btn btn-primary">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 0C4.477 0 0 4.477 0 10c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0110 4.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C17.137 18.165 20 14.418 20 10c0-5.523-4.477-10-10-10z" clip-rule="evenodd"/>
+                            </svg>
+                            <span>查看 GitHub 仓库</span>
+                        </a>
+                        <a href="https://hub.docker.com/u/sdcb" target="_blank" class="btn btn-secondary">
+                            <span>前往 Docker Hub 镜像</span>
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="product-preview">
+                    <div class="preview-window">
+                        <div class="window-header">
+                            <div class="window-dots">
+                                <span></span><span></span><span></span>
+                            </div>
+                            <div class="window-title">Sdcb Chats</div>
+                        </div>
+                        <div class="window-content">
+                            <div class="chat-interface">
+                                <div class="chat-message chat-user">
+                                    <div class="message-content">如何在.NET中使用AI推理？</div>
+                                </div>
+                                <div class="chat-message chat-ai">
+                                    <div class="message-avatar">AI</div>
+                                    <div class="message-content">
+                                        在.NET中使用AI推理，可以通过 sdcb 提供的开源库来实现。
+                                        例如使用 PaddleSharp 进行 OCR 识别，或使用 OpenVINO.NET 
+                                        进行高性能推理...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 4: Core Infrastructure -->
+    <section id="infrastructure" class="infrastructure">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">构建卓越：我们的高性能.NET库</h2>
+                <p class="section-subtitle">
+                    我们为.NET生态打造了坚实的AI与技术地基。这些库被全球数千名开发者所信赖
+                </p>
+            </div>
+            
+            <div class="infrastructure-category">
+                <h3 class="category-title">
+                    <span class="category-icon">🤖</span>
+                    AI 推理层
+                </h3>
+                <div class="library-grid">
+                    <div class="library-card">
+                        <div class="library-header">
+                            <h4 class="library-name">PaddleSharp</h4>
+                            <div class="library-badges">
+                                <span class="badge badge-star">⭐ 热门</span>
+                                <span class="badge badge-nuget">NuGet</span>
+                            </div>
+                        </div>
+                        <p class="library-description">
+                            业界领先的百度 PaddlePaddle 推理库.NET 绑定。为.NET 带来强大的 
+                            PaddleOCR、PaddleDetection 等能力，让文字识别和目标检测触手可及。
+                        </p>
+                        <div class="library-features">
+                            <span class="feature-tag">OCR识别</span>
+                            <span class="feature-tag">目标检测</span>
+                            <span class="feature-tag">图像分类</span>
+                        </div>
+                        <a href="https://github.com/sdcb/PaddleSharp" target="_blank" class="library-link">
+                            查看项目 →
+                        </a>
+                    </div>
+                    
+                    <div class="library-card">
+                        <div class="library-header">
+                            <h4 class="library-name">OpenVINO.NET</h4>
+                            <div class="library-badges">
+                                <span class="badge badge-intel">Intel</span>
+                                <span class="badge badge-nuget">NuGet</span>
+                            </div>
+                        </div>
+                        <p class="library-description">
+                            英特尔 OpenVINO™ 工具套件的高质量.NET 封装。释放.NET 在边缘计算和
+                            CPU/GPU上的AI推理性能，让高效推理无处不在。
+                        </p>
+                        <div class="library-features">
+                            <span class="feature-tag">边缘计算</span>
+                            <span class="feature-tag">CPU优化</span>
+                            <span class="feature-tag">跨平台</span>
+                        </div>
+                        <a href="https://github.com/sdcb/OpenVINO.NET" target="_blank" class="library-link">
+                            查看项目 →
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="infrastructure-category">
+                <h3 class="category-title">
+                    <span class="category-icon">⚡</span>
+                    AI 数据与技术基础层
+                </h3>
+                <div class="library-grid library-grid-3">
+                    <div class="library-card">
+                        <div class="library-header">
+                            <h4 class="library-name">Sdcb.FFmpeg</h4>
+                            <div class="library-badges">
+                                <span class="badge badge-nuget">NuGet</span>
+                            </div>
+                        </div>
+                        <p class="library-description">
+                            高性能 FFmpeg.NET API。为AI模型提供强大的多媒体数据预处理能力，
+                            支持视频解码、音频处理、格式转换等全方位多媒体操作。
+                        </p>
+                        <div class="library-features">
+                            <span class="feature-tag">视频处理</span>
+                            <span class="feature-tag">音频编解码</span>
+                        </div>
+                        <a href="https://github.com/sdcb/Sdcb.FFmpeg" target="_blank" class="library-link">
+                            查看项目 →
+                        </a>
+                    </div>
+                    
+                    <div class="library-card">
+                        <div class="library-header">
+                            <h4 class="library-name">Sdcb.LibRaw</h4>
+                            <div class="library-badges">
+                                <span class="badge badge-nuget">NuGet</span>
+                            </div>
+                        </div>
+                        <p class="library-description">
+                            基于 LibRaw 的高级 C# 原始图像（Raw Image）处理库。解锁专业级图像数据，
+                            为摄影和图像处理应用提供强大支持。
+                        </p>
+                        <div class="library-features">
+                            <span class="feature-tag">RAW处理</span>
+                            <span class="feature-tag">专业摄影</span>
+                        </div>
+                        <a href="https://github.com/sdcb/Sdcb.LibRaw" target="_blank" class="library-link">
+                            查看项目 →
+                        </a>
+                    </div>
+                    
+                    <div class="library-card">
+                        <div class="library-header">
+                            <h4 class="library-name">Sdcb.Arithmetic</h4>
+                            <div class="library-badges">
+                                <span class="badge badge-nuget">NuGet</span>
+                            </div>
+                        </div>
+                        <p class="library-description">
+                            连接 gmp 和 mpfr 的高精度算术库。赋能.NET 科学计算与密码学，
+                            为需要超高精度计算的场景提供坚实基础。
+                        </p>
+                        <div class="library-features">
+                            <span class="feature-tag">高精度</span>
+                            <span class="feature-tag">密码学</span>
+                        </div>
+                        <a href="https://github.com/sdcb/Sdcb.Arithmetic" target="_blank" class="library-link">
+                            查看项目 →
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="infrastructure-cta">
+                <a href="https://github.com/sdcb" target="_blank" class="btn btn-outline-large">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path fill-rule="evenodd" d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>在 GitHub 上查看所有项目</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 5: Authority & Thought Leadership -->
+    <section id="about" class="authority">
+        <div class="container">
+            <div class="authority-layout">
+                <div class="authority-content">
+                    <h2 class="authority-title">源自专业，服务社区</h2>
+                    <p class="authority-description">
+                        sdcb 由<strong>微软最有价值专家（MVP）ZHOU Jie</strong> 创立并长期维护。
+                        项目以对技术的深入理解和热情为驱动，我们也在技术博客中持续分享关于性能优化、应用密码学和算法探索的深度见解。
+                    </p>
+                    <div class="authority-highlights">
+                        <div class="highlight-item">
+                            <div class="highlight-icon">🏆</div>
+                            <div class="highlight-text">
+                                <h4>Microsoft MVP</h4>
+                                <p>微软最有价值专家认证</p>
+                            </div>
+                        </div>
+                        <div class="highlight-item">
+                            <div class="highlight-icon">📚</div>
+                            <div class="highlight-text">
+                                <h4>技术布道者</h4>
+                                <p>深度技术文章与最佳实践分享</p>
+                            </div>
+                        </div>
+                        <div class="highlight-item">
+                            <div class="highlight-icon">🌐</div>
+                            <div class="highlight-text">
+                                <h4>开源贡献者</h4>
+                                <p>为全球.NET社区做出持续贡献</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="authority-cta">
+                        <a href="https://www.cnblogs.com/sdcb" target="_blank" class="btn btn-primary">
+                            <span>访问我们的技术博客</span>
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </a>
+                        <a href="https://www.nuget.org/profiles/sdflysha" target="_blank" class="btn btn-secondary">
+                            <span>在 NuGet 上获取包</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="authority-visual">
+                    <div class="founder-card">
+                        <img src="https://avatars.githubusercontent.com/u/1317141?v=4" alt="ZHOU Jie 头像" class="founder-avatar" loading="lazy" decoding="async">
+                        <div class="founder-info">
+                            <div class="founder-name">ZHOU Jie</div>
+                            <div class="founder-role">sdcb 创办者 · Microsoft MVP</div>
+                            <p class="founder-note">专注 .NET 与 AI 的开源实践</p>
+                        </div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-grid">
+                            <div class="stat-box">
+                                <div class="stat-number">1.9M+</div>
+                                <div class="stat-desc">总下载量</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-number">2000+</div>
+                                <div class="stat-desc">GitHub Stars</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-number">50+</div>
+                                <div class="stat-desc">开源项目</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-number">5+</div>
+                                <div class="stat-desc">活跃年份</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 6: Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <span class="brand-logo">sdcb</span>
+                        <span class="brand-tagline">.ai</span>
+                    </div>
+                    <p class="footer-slogan">Serving Dotnet, Constructing Brilliant</p>
+                    <p class="footer-description">服务.NET，构建卓越</p>
+                </div>
+                
+                <div class="footer-column">
+                    <h4>产品</h4>
+                    <ul>
+                        <li><a href="https://github.com/sdcb/chats" target="_blank">Sdcb Chats</a></li>
+                        <li><a href="https://github.com/sdcb/PaddleSharp" target="_blank">PaddleSharp</a></li>
+                        <li><a href="https://github.com/sdcb/OpenVINO.NET" target="_blank">OpenVINO.NET</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h4>资源</h4>
+                    <ul>
+                        <li><a href="https://github.com/sdcb" target="_blank">GitHub</a></li>
+                        <li><a href="https://hub.docker.com/u/sdcb" target="_blank">Docker Hub</a></li>
+                        <li><a href="https://www.nuget.org/profiles/sdflysha" target="_blank">NuGet</a></li>
+                        <li><a href="https://www.cnblogs.com/sdcb" target="_blank">技术博客</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h4>社区</h4>
+                    <ul>
+                        <li><a href="https://github.com/sdcb/chats/issues" target="_blank">问题反馈</a></li>
+                        <li><a href="https://github.com/sdcb/chats/discussions" target="_blank">讨论区</a></li>
+                        <li><a href="https://www.cnblogs.com/sdcb" target="_blank">博客园</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 sdcb. All rights reserved.</p>
+                <div class="footer-social">
+                    <a href="https://github.com/sdcb" target="_blank" aria-label="GitHub">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path fill-rule="evenodd" d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" clip-rule="evenodd"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
