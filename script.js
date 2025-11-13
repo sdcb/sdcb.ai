@@ -6,13 +6,23 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         e.preventDefault();
         const target = document.querySelector(this.getAttribute('href'));
         if (target) {
-            const navHeight = document.querySelector('.navbar').offsetHeight;
+            const navbarElement = document.querySelector('.navbar');
+            const navLinks = document.querySelector('.nav-links');
+            const navToggle = document.querySelector('.nav-toggle');
+            const isMobileMenuOpen = navLinks && navLinks.classList.contains('open');
+            const navHeight = navbarElement ? navbarElement.offsetHeight : 0;
             const targetPosition = target.offsetTop - navHeight;
             
             window.scrollTo({
                 top: targetPosition,
                 behavior: 'smooth'
             });
+
+            if (isMobileMenuOpen && navLinks && navToggle) {
+                navLinks.classList.remove('open');
+                navToggle.classList.remove('is-active');
+                navToggle.setAttribute('aria-expanded', 'false');
+            }
         }
     });
 });
@@ -232,21 +242,63 @@ libraryCards.forEach(card => {
 });
 
 // ===========================
-// Mobile Menu Toggle (if needed in future)
+// Mobile Menu Toggle
 // ===========================
-// Placeholder for responsive menu functionality
-const initMobileMenu = () => {
-    const navLinks = document.querySelector('.nav-links');
-    const screenWidth = window.innerWidth;
-    
-    if (screenWidth <= 768) {
-        // Mobile menu logic can be added here
-        console.log('Mobile view detected');
-    }
-};
+const navLinks = document.querySelector('.nav-links');
+const navToggle = document.querySelector('.nav-toggle');
 
-window.addEventListener('resize', initMobileMenu);
-initMobileMenu();
+if (navLinks && navToggle) {
+    let outsideClickHandlerBound = false;
+
+    function closeMenu() {
+        navLinks.classList.remove('open');
+        navToggle.classList.remove('is-active');
+        navToggle.setAttribute('aria-expanded', 'false');
+        if (outsideClickHandlerBound) {
+            document.removeEventListener('click', handleOutsideClick);
+            outsideClickHandlerBound = false;
+        }
+    }
+
+    function openMenu() {
+        navLinks.classList.add('open');
+        navToggle.classList.add('is-active');
+        navToggle.setAttribute('aria-expanded', 'true');
+        if (!outsideClickHandlerBound) {
+            document.addEventListener('click', handleOutsideClick);
+            outsideClickHandlerBound = true;
+        }
+    }
+
+    function handleOutsideClick(event) {
+        if (!navLinks.contains(event.target) && !navToggle.contains(event.target)) {
+            closeMenu();
+        }
+    }
+
+    const toggleMenu = (event) => {
+        event.stopPropagation();
+        if (navLinks.classList.contains('open')) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
+    };
+
+    const handleResize = () => {
+        if (window.innerWidth > 768) {
+            closeMenu();
+        }
+    };
+
+    navToggle.addEventListener('click', toggleMenu);
+
+    navLinks.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', closeMenu);
+    });
+
+    window.addEventListener('resize', handleResize);
+}
 
 // ===========================
 // Preload Important Images
