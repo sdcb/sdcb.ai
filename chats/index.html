@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sdcb Chats - 您的下一代 AI 聊天中枢</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <style>
+        /* 应用 Inter 字体 和基础样式 */
+        body {
+            font-family: 'Inter', 'Microsoft YaHei', sans-serif;
+            background-color: #0c0a18; /* 深靛蓝背景 */
+            color: #e0e0e0;
+            overflow-x: hidden; /* 防止 AOS 动画导致水平滚动 */
+        }
+
+        /* 科技感网格背景 (应用在 body 或特定 section) */
+        .tech-bg {
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 2rem 2rem; /* 网格大小 */
+            background-position: center center;
+        }
+
+        /* 渐变发光按钮 */
+        .glow-button {
+            position: relative;
+            background: linear-gradient(90deg, #4f46e5, #a855f7); /* 靛蓝到紫色 */
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+        }
+        .glow-button:hover {
+            box-shadow: 0 0 30px 5px rgba(168, 85, 247, 0.6); /* 悬停时增强光晕 */
+            transform: translateY(-2px);
+        }
+
+        /* 玻璃拟态卡片 (Glassmorphism) */
+        .glass-card {
+            background: rgba(30, 27, 47, 0.5); /* 半透明深紫 */
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(168, 85, 247, 0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 渐变标题文本 */
+        .gradient-text {
+            background: linear-gradient(90deg, #818cf8, #c084fc); /* 浅靛蓝到浅紫 */
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+        }
+
+        /* 导航栏玻璃效果 */
+        .glass-nav {
+            background: rgba(12, 10, 24, 0.7); /* 深色背景，带透明度 */
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* 模拟应用窗口 */
+        .app-mockup {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .app-mockup-header {
+            background: #1e1b2f; /* 稍亮的标题栏 */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* 打字机效果 */
+        .typewriter-container {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 1.5em;
+        }
+        .typewriter {
+            display: inline-block;
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+        .typewriter-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 1.2em;
+            background: linear-gradient(180deg, #818cf8, #c084fc);
+            margin-left: 4px;
+            animation: blink 0.7s infinite;
+            vertical-align: text-bottom;
+            border-radius: 1px;
+        }
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+        
+        /* 提供商名称容器 */
+        .provider-line {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            min-height: 60px;
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        indigo: {
+                            DEFAULT: '#4f46e5',
+                            'light': '#818cf8',
+                        },
+                        purple: {
+                            DEFAULT: '#a855f7',
+                            'light': '#c084fc',
+                        },
+                        'deep-indigo': '#0c0a18',
+                        'card-bg': '#1e1b2f',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="tech-bg">
+
+    <header class="glass-nav sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="#" class="text-2xl font-bold text-white">
+                <i class="fa-solid fa-brain mr-2 text-indigo-400"></i>
+                Sdcb<span class="font-light"> Chats</span>
+            </a>
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="#features" class="text-gray-300 hover:text-indigo-400 transition">核心功能</a>
+                <a href="#demo" class="text-gray-300 hover:text-indigo-400 transition">产品预览</a>
+                <a href="https://github.com/sdcb/chats" target="_blank" class="text-gray-300 hover:text-indigo-400 transition">
+                    <i class="fa-brands fa-github mr-1"></i> GitHub
+                </a>
+                <a href="https://github.com/sdcb/chats/releases" target="_blank" class="glow-button text-white font-semibold py-2 px-5 rounded-full shadow-lg">
+                    立即下载
+                </a>
+            </div>
+            <div class="md:hidden">
+                <button class="text-white text-2xl">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="relative min-h-screen flex items-center justify-center pt-20 pb-12 overflow-hidden">
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40vw] h-[40vw] max-w-lg max-h-lg bg-purple-600 rounded-full opacity-20 blur-[100px] -z-10"></div>
+            <div class="absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[30vw] h-[30vw] max-w-md max-h-md bg-indigo-600 rounded-full opacity-20 blur-[100px] -z-10"></div>
+
+            <div class="container mx-auto px-6 text-center" data-aos="fade-up">
+                <h1 class="text-5xl md:text-7xl font-black text-white leading-tight mb-8">
+                    聚合所有 AI，
+                    <span class="gradient-text">一个入口掌控全局</span>
+                </h1>
+                
+                <div class="mt-8 mb-6">
+                    <p class="text-xl md:text-2xl text-gray-200 font-semibold">
+                        <strong class="text-indigo-300">Sdcb Chats</strong> - 您的下一代 AI 聊天中枢
+                    </p>
+                </div>
+
+                <div class="provider-line mt-6 mb-8">
+                    <span class="text-2xl md:text-3xl text-indigo-300 font-light">chats.</span>
+                    <div class="typewriter-container">
+                        <span class="typewriter gradient-text" id="provider-text"></span>
+                        <span class="typewriter-cursor"></span>
+                    </div>
+                </div>
+
+                <p class="mt-6 text-base md:text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed">
+                    无缝集成多个 AI 模型提供商，配备多会话管理、插件系统和专业提示词库。
+                    <br class="hidden md:block"/>
+                    让您在一个应用中自由切换，高效工作。
+                </p>
+                <div class="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
+                    <a href="https://github.com/sdcb/chats/releases" target="_blank" class="glow-button text-white font-bold py-3 px-8 rounded-full text-lg shadow-xl w-full sm:w-auto">
+                        <i class="fa-solid fa-download mr-2"></i> 免费下载
+                    </a>
+                    <a href="https://github.com/sdcb/chats" target="_blank" class="py-3 px-8 rounded-full text-lg text-gray-300 ring-1 ring-gray-600 hover:bg-gray-800 hover:text-white transition w-full sm:w-auto">
+                        <i class="fa-brands fa-github mr-2"></i> 查看源码
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="py-24">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16">
+                    <h2 class="text-4xl font-bold text-white" data-aos="fade-up">专为高效 AI 交互而生</h2>
+                    <p class="mt-4 text-lg text-gray-400" data-aos="fade-up" data-aos-delay="100">
+                        释放 AI 的全部潜力，告别繁琐切换。
+                    </p>
+                </div>
+                
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="glass-card rounded-xl p-8" data-aos="fade-up" data-aos-delay="200">
+                        <div class="text-4xl text-indigo-400 mb-5">
+                            <i class="fa-solid fa-cubes-stacked"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-white mb-3">多模型统一支持</h3>
+                        <p class="text-gray-300">
+                            一个平台，无缝切换 OpenAI, Azure OpenAI, PaLM 2, 文心和 ChatGLM。无需再为不同模型打开不同网页。
+                        </p>
+                    </div>
+                    
+                    <div class="glass-card rounded-xl p-8" data-aos="fade-up" data-aos-delay="300">
+                        <div class="text-4xl text-purple-400 mb-5">
+                            <i class="fa-solid fa-lightbulb"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-white mb-3">专业提示词管理</h3>
+                        <p class="text-gray-300">
+                            内置强大的提示词 (Prompt) 库管理功能。保存、复用和分享您的最佳实践，极大提升工作效率。
+                        </p>
+                    </div>
+                    
+                    <div class="glass-card rounded-xl p-8" data-aos="fade-up" data-aos-delay="400">
+                        <div class="text-4xl text-indigo-400 mb-5">
+                            <i class="fa-solid fa-puzzle-piece"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-white mb-3">强大插件生态</h3>
+                        <p class="text-gray-300">
+                            通过灵活的插件系统扩展应用能力。无论是连接外部数据还是执行特定任务，插件都能帮您实现。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="demo" class="py-24">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16">
+                    <h2 class="text-4xl font-bold text-white" data-aos="fade-up">
+                        直观，强大，<span class="gradient-text">一目了然</span>
+                    </h2>
+                    <p class="mt-4 text-lg text-gray-400" data-aos="fade-up" data-aos-delay="100">
+                        精心设计的界面，专注于您的聊天体验。
+                    </p>
+                </div>
+
+                <div class="app-mockup rounded-xl overflow-hidden max-w-6xl mx-auto" data-aos="zoom-in-up" data-aos-duration="800">
+                    <div class="app-mockup-header h-10 flex items-center px-4">
+                        <div class="flex space-x-2">
+                            <span class="w-3 h-3 bg-red-500 rounded-full block"></span>
+                            <span class="w-3 h-3 bg-yellow-500 rounded-full block"></span>
+                            <span class="w-3 h-3 bg-green-500 rounded-full block"></span>
+                        </div>
+                        <div class="text-center flex-1 text-gray-400 text-sm">
+                            Sdcb Chats
+                        </div>
+                    </div>
+                    
+                    <div class="bg-card-bg h-[30rem] md:h-[40rem] flex items-center justify-center overflow-hidden">
+                        <img src="https://github.com/user-attachments/assets/2d9d609e-142e-4dbf-bdba-87477d7753fb" 
+                             alt="Sdcb Chats 应用主界面截图" 
+                             class="w-full h-full object-cover">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-24">
+            <div class="container mx-auto px-6">
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-10">
+                    
+                    <div class="text-center" data-aos="fade-up" data-aos-delay="100">
+                        <div class="text-4xl text-purple-400 mb-4"><i class="fa-solid fa-shield-halved"></i></div>
+                        <h4 class="text-xl font-bold text-white mb-2">开源与安全</h4>
+                        <p class="text-gray-400">项目完全开源，代码透明，数据安全掌握在您自己手中。</p>
+                    </div>
+
+                    <div class="text-center" data-aos="fade-up" data-aos-delay="200">
+                        <div class="text-4xl text-indigo-400 mb-4"><i class="fa-solid fa-comments"></i></div>
+                        <h4 class="text-xl font-bold text-white mb-2">多会话管理</h4>
+                        <p class="text-gray-400">像专业 IDE 一样管理您的 AI 对话，轻松处理多个项目和主题。</p>
+                    </div>
+
+                    <div class="text-center" data-aos="fade-up" data-aos-delay="300">
+                        <div class="text-4xl text-purple-400 mb-4"><i class="fa-solid fa-bolt"></i></div>
+                        <h4 class="text-xl font-bold text-white mb-2">.NET 强力驱动</h4>
+                        <p class="text-gray-400">基于 .NET 8 和 Blazor 构建，带来稳定、高性能的跨平台体验。</p>
+                    </div>
+
+                    <div class="text-center" data-aos="fade-up" data-aos-delay="400">
+                        <div class="text-4xl text-indigo-400 mb-4"><i class="fa-solid fa-code-branch"></i></div>
+                        <h4 class="text-xl font-bold text-white mb-2">社区贡献</h4>
+                        <p class="text-gray-400">欢迎开发者贡献代码、提交插件，共同构建 AI 聊天生态。</p>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <section class="py-24 relative overflow-hidden">
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] max-w-2xl max-h-2xl bg-indigo-800 rounded-full opacity-25 blur-[120px] -z-10"></div>
+
+            <div class="container mx-auto px-6 text-center" data-aos="fade-up">
+                <h2 class="text-4xl md:text-5xl font-bold text-white">
+                    立即开始您的
+                    <span class="gradient-text">一站式 AI 之旅</span>
+                </h2>
+                <p class="mt-5 text-lg text-gray-300 max-w-xl mx-auto">
+                    下载 Sdcb Chats，体验前所未有的 AI 聚合与效率。
+                </p>
+                <div class="mt-10">
+                    <a href="https://github.com/sdcb/chats/releases" target="_blank" class="glow-button text-white font-bold py-4 px-10 rounded-full text-xl shadow-xl transition">
+                        <i class="fa-solid fa-rocket mr-2"></i> 立即获取
+                    </a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="border-t border-gray-800/50 py-12">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center text-center md:text-left">
+                <div class="mb-4 md:mb-0">
+                    <p class="text-gray-400">&copy; 2025 Sdcb Chats All rights reserved.</p>
+                    <p class="text-sm text-gray-500">一个由社区驱动的开源项目。</p>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="https://github.com/sdcb/chats" target="_blank" class="text-gray-400 hover:text-indigo-400 transition text-2xl">
+                        <i class="fa-brands fa-github"></i>
+                    </a>
+                    </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            duration: 700, // 动画持续时间
+            once: true,     // 动画只播放一次
+            offset: 100,    // 触发动画的偏移量
+            easing: 'ease-out-cubic', // 缓动效果
+        });
+
+        // 打字机效果 - 模型提供商切换
+        const providers = ['Azure AI Foundry', '腾讯混元', '零一万物', '月之暗面', 'OpenAI', '文心一言', '通义千问', '讯飞星火', '智谱AI', 'DeepSeek', 'x.ai', 'Github Models', '谷歌AI', 'Ollama', 'MiniMax', '火山方舟', '硅基流动', 'OpenRouter', '小马算力'];
+        let currentProviderIndex = 0;
+        let currentText = '';
+        let isDeleting = false;
+        let charIndex = 0;
+
+        function typeWriter() {
+            const providerElement = document.getElementById('provider-text');
+            const currentProvider = providers[currentProviderIndex];
+            
+            if (!isDeleting) {
+                // 正在输入
+                currentText = currentProvider.substring(0, charIndex + 1);
+                charIndex++;
+                
+                if (charIndex === currentProvider.length) {
+                    // 输入完成，等待一段时间后开始删除
+                    setTimeout(() => {
+                        isDeleting = true;
+                        typeWriter();
+                    }, 2000);
+                    providerElement.textContent = currentText;
+                    return;
+                }
+            } else {
+                // 正在删除
+                currentText = currentProvider.substring(0, charIndex - 1);
+                charIndex--;
+                
+                if (charIndex === 0) {
+                    // 删除完成，切换到下一个提供商
+                    isDeleting = false;
+                    currentProviderIndex = (currentProviderIndex + 1) % providers.length;
+                    setTimeout(() => {
+                        typeWriter();
+                    }, 500);
+                    providerElement.textContent = currentText;
+                    return;
+                }
+            }
+            
+            providerElement.textContent = currentText;
+            
+            // 设置打字速度
+            const speed = isDeleting ? 50 : 100;
+            setTimeout(typeWriter, speed);
+        }
+
+        // 页面加载后启动打字机效果
+        window.addEventListener('load', () => {
+            setTimeout(typeWriter, 500);
+        });
+    </script>
+
+</body>
+</html>
