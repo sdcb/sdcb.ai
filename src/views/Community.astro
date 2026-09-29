@@ -66,18 +66,18 @@ const bust = snapshot.generatedAt.slice(0, 10).replaceAll('-', '');
       {
         wechatGroups.map((g) => (
           <div class="card group flex flex-col items-center gap-5 p-6 sm:flex-row" data-qr>
-            <div class="grid size-44 shrink-0 place-items-center rounded-xl border border-line bg-white p-2">
+            <div class="w-52 shrink-0 overflow-hidden rounded-xl border border-line bg-white">
               <img
                 src={`${g.qr}?v=${bust}`}
                 alt={`${t(lang, g.name)} QR`}
-                width="160"
-                height="160"
+                width="1207"
+                height="1688"
                 loading="lazy"
                 referrerpolicy="no-referrer"
-                class="size-40 group-data-[failed]:hidden"
+                class="block h-auto w-full group-data-[failed]:hidden"
                 onerror="this.closest('[data-qr]').dataset.failed=''"
               />
-              <span class="hidden px-3 text-center text-xs text-neutral-500 group-data-[failed]:block">
+              <span class="hidden px-3 py-20 text-center text-xs text-neutral-500 group-data-[failed]:block">
                 {L('二维码暂时无法加载', 'QR code unavailable')}
               </span>
             </div>
