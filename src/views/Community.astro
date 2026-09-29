@@ -1,0 +1,126 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { t, type Lang } from '../i18n';
+import { qqGroups, wechatGroups, officialAccount } from '../data/community';
+import { snapshot } from '../data/snapshot';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const L = (zh: string, en: string) => t(lang, { zh, en });
+const bust = snapshot.generatedAt.slice(0, 10).replaceAll('-', '');
+---
+
+<Base
+  lang={lang}
+  title={L('社区', 'Community')}
+  description={L('加入 sdcb 社区：.NET骚操作交流群、C#/.NET 计算机视觉技术交流群、Sdcb Chats 交流群，以及微信群和公众号。', 'Join the sdcb community: QQ and WeChat groups for .NET, computer vision and Sdcb Chats, plus the WeChat Official Account.')}
+>
+  <section class="container-x pt-20 sm:pt-24">
+    <p class="eyebrow">{L('社区', 'Community')}</p>
+    <h1 class="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">{L('来群里一起骚操作', 'Come hang out')}</h1>
+    <p class="lead mt-5 max-w-2xl">
+      {
+        L(
+          '提问、交流、分享你用 .NET 做的东西，都欢迎。项目 Bug 与功能建议，请优先在对应 GitHub 仓库提 Issue。',
+          'Questions, ideas, show-and-tell — all welcome (groups are mostly Chinese-speaking). For bugs and feature requests, please open an issue on the relevant GitHub repo.',
+        )
+      }
+    </p>
+  </section>
+
+  <section id="qq" class="container-x scroll-mt-24 pt-16">
+    <h2 class="flex items-center gap-2 text-2xl font-semibold tracking-tight"><Icon name="users" size={20} /> {L('QQ 群', 'QQ groups')}</h2>
+    <div class="mt-6 grid gap-4 md:grid-cols-3">
+      {
+        qqGroups.map((g) => (
+          <div class="card flex flex-col p-6">
+            <h3 class="font-semibold">{t(lang, g.name)}</h3>
+            <p class="mt-1.5 text-sm text-fg-mute">{t(lang, g.topic)}</p>
+            <div class="mt-5 font-mono text-2xl font-semibold tracking-wider">{g.id}</div>
+            <div class="mt-5 flex flex-wrap gap-2">
+              <button type="button" data-copy={g.id} class="btn-ghost px-3 py-1.5 text-xs">
+                <Icon name="copy" size={13} />
+                <span data-copy-label>{L('复制群号', 'Copy number')}</span>
+              </button>
+              {g.link && (
+                <a href={g.link} target="_blank" rel="noopener" class="btn-primary px-3 py-1.5 text-xs">
+                  {L('一键加群', 'Join')} <Icon name="arrowUpRight" size={13} />
+                </a>
+              )}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section id="wechat" class="container-x scroll-mt-24 pt-16">
+    <h2 class="flex items-center gap-2 text-2xl font-semibold tracking-tight"><Icon name="message" size={20} /> {L('微信群', 'WeChat groups')}</h2>
+    <p class="mt-2 text-sm text-fg-mute">
+      {L('微信群二维码每周更新一次。如果扫码提示已过期，请先加入对应的 QQ 群，群里会提供最新的入群二维码。', 'WeChat group codes rotate weekly. If one has expired, join the matching QQ group first — the latest code is posted there.')}
+    </p>
+    <div class="mt-6 grid gap-4 md:grid-cols-2">
+      {
+        wechatGroups.map((g) => (
+          <div class="card group flex flex-col items-center gap-5 p-6 sm:flex-row" data-qr>
+            <div class="grid size-44 shrink-0 place-items-center rounded-xl border border-line bg-white p-2">
+              <img
+                src={`${g.qr}?v=${bust}`}
+                alt={`${t(lang, g.name)} QR`}
+                width="160"
+                height="160"
+                loading="lazy"
+                referrerpolicy="no-referrer"
+                class="size-40 group-data-[failed]:hidden"
+                onerror="this.closest('[data-qr]').dataset.failed=''"
+              />
+              <span class="hidden px-3 text-center text-xs text-neutral-500 group-data-[failed]:block">
+                {L('二维码暂时无法加载', 'QR code unavailable')}
+              </span>
+            </div>
+            <div>
+              <h3 class="font-semibold">{t(lang, g.name)}</h3>
+              <p class="mt-2 text-sm text-fg-soft">{L('微信扫一扫加入。', 'Scan with WeChat to join.')}</p>
+              <p class="mt-3 text-sm text-fg-mute">
+                {L('过期了？加 QQ 群', 'Expired? Join QQ group')} <span class="font-mono text-fg">{g.fallbackQQ}</span>
+              </p>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section id="mp" class="container-x scroll-mt-24 pt-16">
+    <h2 class="flex items-center gap-2 text-2xl font-semibold tracking-tight"><Icon name="rss" size={20} /> {L('微信公众号', 'WeChat Official Account')}</h2>
+    <div class="card mt-6 flex flex-col items-center gap-6 p-6 sm:flex-row">
+      <img src={officialAccount.qr} alt={`${officialAccount.name} QR`} width="160" height="160" loading="lazy" referrerpolicy="no-referrer" class="size-40 rounded-xl bg-white p-2" />
+      <div>
+        <h3 class="font-mono text-xl font-semibold text-brand">{officialAccount.name}</h3>
+        <p class="mt-2 max-w-md text-fg-soft">
+          {L('文章与博客园同步更新，微信里看更方便。', 'The same posts as the blog, delivered in WeChat.')}
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="container-x pt-16">
+    <h2 class="flex items-center gap-2 text-2xl font-semibold tracking-tight"><Icon name="github" size={20} /> GitHub</h2>
+    <div class="mt-6 grid gap-4 sm:grid-cols-3">
+      {
+        [
+          { label: 'SimdPaddleOCR Issues', url: 'https://github.com/sdcb/SimdPaddleOCR/issues' },
+          { label: 'Sdcb Chats Issues', url: 'https://github.com/sdcb/chats/issues' },
+          { label: 'PaddleSharp Issues', url: 'https://github.com/sdcb/PaddleSharp/issues' },
+        ].map((l) => (
+          <a href={l.url} target="_blank" rel="noopener" class="card flex items-center justify-between p-5 font-mono text-sm hover:bg-surface-2/60">
+            {l.label} <Icon name="arrowUpRight" class="text-fg-mute" />
+          </a>
+        ))
+      }
+    </div>
+  </section>
+</Base>

@@ -1,0 +1,91 @@
+---
+import Icon from './Icon.astro';
+import { href, t, fmtDate, type Lang } from '../i18n';
+import { site } from '../data/site';
+import { snapshot } from '../data/snapshot';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
+const cols = [
+  {
+    title: { zh: '旗舰项目', en: 'Flagships' },
+    links: [
+      { label: 'SimdPaddleOCR', url: href(lang, '/simdpaddleocr') },
+      { label: 'Sdcb Chats', url: href(lang, '/chats') },
+      { label: 'PaddleSharp', url: 'https://github.com/sdcb/PaddleSharp' },
+      { label: 'OpenVINO.NET', url: 'https://github.com/sdcb/OpenVINO.NET' },
+      { label: t(lang, { zh: '全部项目', en: 'All projects' }), url: href(lang, '/projects') },
+    ],
+  },
+  {
+    title: { zh: '在别处找到我', en: 'Elsewhere' },
+    links: [
+      { label: 'GitHub', url: site.links.github },
+      { label: t(lang, { zh: '博客园 · .NET骚操作', en: 'Blog (cnblogs, zh)' }), url: site.links.blog },
+      { label: 'NuGet', url: site.links.nuget },
+      { label: 'Docker Hub', url: site.links.docker },
+      { label: 'Microsoft MVP', url: site.mvpProfile },
+    ],
+  },
+  {
+    title: { zh: '社区', en: 'Community' },
+    links: [
+      { label: t(lang, { zh: 'QQ 群', en: 'QQ groups' }), url: href(lang, '/community') + '#qq' },
+      { label: t(lang, { zh: '微信群', en: 'WeChat groups' }), url: href(lang, '/community') + '#wechat' },
+      { label: t(lang, { zh: '微信公众号', en: 'WeChat Official Account' }), url: href(lang, '/community') + '#mp' },
+      { label: 'RSS', url: site.links.blogRss },
+    ],
+  },
+];
+---
+
+<footer class="mt-24 border-t border-line bg-bg-soft">
+  <div class="container-x grid gap-10 py-14 md:grid-cols-[1.4fr_repeat(3,1fr)]">
+    <div>
+      <div class="font-mono text-lg font-semibold"><span class="text-brand">&gt;</span> sdcb<span class="text-fg-mute">.ai</span></div>
+      <p class="mt-3 font-mono text-sm text-fg-soft">
+        <b class="text-fg">S</b>erving <b class="text-fg">d</b>otNET, <b class="text-fg">c</b>onstructing <b class="text-fg">b</b>rilliance
+      </p>
+      <p class="mt-4 max-w-xs text-sm leading-relaxed text-fg-mute">
+        {t(lang, {
+          zh: 'ZHOU Jie 的个人站点。这里的一切都开源、都用 C# 写成，也都可以在 GitHub 上找到。',
+          en: "ZHOU Jie's personal site. Everything here is open source, written in C#, and on GitHub.",
+        })}
+      </p>
+    </div>
+    {
+      cols.map((c) => (
+        <div>
+          <h2 class="font-mono text-xs tracking-wider text-fg-mute uppercase">{t(lang, c.title)}</h2>
+          <ul class="mt-4 space-y-2.5 text-sm">
+            {c.links.map((l) => (
+              <li>
+                <a
+                  href={l.url}
+                  class="text-fg-soft hover:text-fg"
+                  {...(l.url.startsWith('http') ? { target: '_blank', rel: 'noopener' } : {})}
+                >
+                  {l.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))
+    }
+  </div>
+  <div class="border-t border-line">
+    <div class="container-x flex flex-col gap-3 py-6 text-xs text-fg-mute sm:flex-row sm:items-center sm:justify-between">
+      <p>© {new Date().getFullYear()} ZHOU Jie · sdcb</p>
+      <p class="font-mono">
+        {t(lang, { zh: '数据快照', en: 'Data snapshot' })}: {fmtDate(snapshot.generatedAt, lang)} ·
+        <a href="https://github.com/sdcb/sdcb.ai" target="_blank" rel="noopener" class="inline-flex items-center gap-1 hover:text-fg">
+          <Icon name="github" size={12} /> {t(lang, { zh: '本站源码', en: 'Source' })}
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>

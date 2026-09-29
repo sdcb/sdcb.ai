@@ -1,0 +1,219 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import CodeWindow from '../components/CodeWindow.astro';
+import PostItem from '../components/PostItem.astro';
+import { t, fmtNumber, fmtDate, type Lang } from '../i18n';
+import { snapshot, repo, release, dockerPulls } from '../data/snapshot';
+import { posts } from '../data/writing';
+import { wechatGroups } from '../data/community';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const L = (zh: string, en: string) => t(lang, { zh, en });
+
+const r = repo('chats');
+const rel = release('chats');
+const pulls = dockerPulls(['chats']);
+const minorReleases = (snapshot.github.history.chats ?? []).filter((h) => /^1\.\d+\.0/.test(h.name));
+const chatsPosts = posts.filter((p) => p.series === 'chats').slice(0, 6);
+const wechat = wechatGroups.find((g) => g.key === 'chats')!;
+
+const dockerCmd = `mkdir -p ./AppData && chmod 755 ./AppData && docker run --restart unless-stopped --name sdcb-chats \\
+  -e DBType=sqlite -e ConnectionStrings__ChatsDB="Data Source=./AppData/chats.db" \\
+  -v ./AppData:/app/AppData -v /var/run/docker.sock:/var/run/docker.sock \\
+  --user 0:0 -p 8080:8080 sdcb/chats:latest`;
+
+const providers = [
+  'Azure AI Foundry', 'OpenAI', 'Anthropic', L('谷歌 AI', 'Google AI'), 'DeepSeek', L('月之暗面', 'Moonshot'), L('阿里百炼', 'Alibaba Bailian'),
+  L('腾讯混元', 'Tencent Hunyuan'), L('百度千帆', 'Baidu Qianfan'), L('智谱 AI', 'Zhipu AI'), L('讯飞星火', 'iFlytek Spark'), L('零一万物', '01.AI'),
+  'MiniMax', L('火山方舟', 'Volcengine Ark'), L('硅基流动', 'SiliconFlow'), 'OpenRouter', 'Ollama', 'x.ai', 'GitHub Models',
+  L('小米 MiMo', 'Xiaomi MiMo'), 'Novita AI', '小马算力',
+];
+
+const features = [
+  { icon: 'layers', title: L('一站式', 'One entry point'), body: L('22+ 模型服务商，一个入口统一管理。', '22+ model providers behind a single entry point.') },
+  { icon: 'zap', title: L('分钟级上手', 'Up in minutes'), body: L('一条命令 Docker 部署，8 个平台原生可执行文件。', 'One-line Docker deploy, native executables for 8 platforms.') },
+  { icon: 'terminal', title: L('代码解释器', 'Code interpreter'), body: L('Docker 沙箱，内置浏览器、代码执行、Excel 等工具。', 'Docker sandbox with browser, code execution, Excel and more.') },
+  { icon: 'gitBranch', title: L('API 网关', 'API gateway'), body: L('兼容 Chat Completions / Messages，可直接接入 Claude Code。', 'Chat Completions / Messages compatible — plug in Claude Code directly.') },
+  { icon: 'globe', title: L('标准协议', 'Standard protocols'), body: L('Chat Completions、Messages、Responses、Gemini，支持交错思考。', 'Chat Completions, Messages, Responses, Gemini — with interleaved thinking.') },
+  { icon: 'eye', title: L('可观测性', 'Observability'), body: L('Request Trace 全链路追踪，快速定位入站/出站请求问题。', 'Request Trace follows every inbound and outbound call end to end.') },
+  { icon: 'image', title: L('多模态', 'Multimodal'), body: L('视觉输入与图像生成。', 'Vision input and image generation.') },
+  { icon: 'box', title: L('灵活存储', 'Flexible storage'), body: L('SQLite / SQL Server / PostgreSQL，本地 / S3 / OSS / Azure Blob。', 'SQLite / SQL Server / PostgreSQL; local, S3, OSS or Azure Blob.') },
+  { icon: 'shield', title: L('企业级安全', 'Enterprise-ready'), body: L('权限与余额控制、限流审计，Keycloak SSO 与短信验证码登录。', 'Permissions, balances, rate limits and audit logs; Keycloak SSO and SMS login.') },
+];
+---
+
+<Base
+  lang={lang}
+  title="Sdcb Chats"
+  description={L(
+    'Sdcb Chats：强大灵活的大模型前端与 AI 网关，支持 22+ 模型服务商、代码解释器、Request Trace，兼容 Chat Completions / Messages / Responses 协议与 Claude Code，Docker 一键部署。',
+    'Sdcb Chats: a powerful LLM front-end and AI gateway. 22+ providers, code interpreter, request tracing, Chat Completions / Messages / Responses compatible, works with Claude Code. One-line Docker deploy.',
+  )}
+>
+  <section class="relative overflow-hidden">
+    <div class="grid-bg pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_top,black_25%,transparent_70%)]"></div>
+    <div class="pointer-events-none absolute -top-40 left-1/2 h-[480px] w-[860px] -translate-x-1/2 rounded-full bg-brand/15 blur-[120px]"></div>
+    <div class="container-x relative pt-20 pb-12 text-center sm:pt-28">
+      <div class="flex flex-wrap justify-center gap-2">
+        {rel && <a href={rel.url} target="_blank" rel="noopener" class="chip hover:text-fg">latest {rel.name} · {fmtDate(rel.publishedAt, lang)}</a>}
+        <span class="chip border-warn/40 text-warn">{L('2.0 筹划中', '2.0 in planning')}</span>
+      </div>
+      <h1 class="mx-auto mt-6 max-w-4xl text-4xl font-bold tracking-tight text-balance sm:text-6xl">
+        {L('聚合所有大模型，', 'Every LLM,')}
+        <span class="gradient-text">{L('一个入口掌控全局', 'one gateway')}</span>
+      </h1>
+      <p class="lead mx-auto mt-6 max-w-2xl">
+        {
+          L(
+            'Sdcb Chats 是一个强大且灵活的大模型前端与 AI 网关，用 C# 与 TypeScript 写成，私有化部署、数据掌握在自己手里。',
+            'Sdcb Chats is a powerful, flexible LLM front-end and AI gateway written in C# and TypeScript — self-hosted, your data stays yours.',
+          )
+        }
+      </p>
+      <div class="mt-9 flex flex-wrap justify-center gap-3">
+        <a href="https://github.com/sdcb/chats" target="_blank" rel="noopener" class="btn-brand">
+          <Icon name="github" /> GitHub
+          <span class="border-l border-white/30 pl-2 font-mono text-xs" data-repo-stars="chats">{fmtNumber(r?.stars ?? 0, 'en')}</span>
+        </a>
+        <a href="https://github.com/sdcb/chats/blob/main/doc/zh-CN/quick-start.md" target="_blank" rel="noopener" class="btn-ghost">{L('部署指南', 'Deployment guide')}</a>
+        <a href="https://hub.docker.com/r/sdcb/chats" target="_blank" rel="noopener" class="btn-ghost"><Icon name="box" /> Docker Hub</a>
+      </div>
+      <div class="mt-10 flex flex-wrap justify-center gap-x-10 gap-y-4 font-mono text-sm text-fg-mute">
+        <span><b class="text-2xl text-fg">{fmtNumber(pulls, lang)}</b> {L('次 Docker 拉取', 'Docker pulls')}</span>
+        <span><b class="text-2xl text-fg">22+</b> {L('模型服务商', 'providers')}</span>
+        <span><b class="text-2xl text-fg">{minorReleases.length}</b> {L('个 1.x 版本', '1.x releases')}</span>
+      </div>
+    </div>
+
+    <div class="container-x relative pb-8" data-reveal>
+      <div class="overflow-hidden rounded-2xl border border-line-strong bg-surface shadow-2xl shadow-brand/10">
+        <div class="flex h-10 items-center gap-2 border-b border-line px-4">
+          <span class="size-2.5 rounded-full bg-fg-mute/30"></span><span class="size-2.5 rounded-full bg-fg-mute/30"></span><span class="size-2.5 rounded-full bg-fg-mute/30"></span>
+          <span class="ml-2 font-mono text-xs text-fg-mute">Sdcb Chats</span>
+        </div>
+        <img
+          src="https://github.com/user-attachments/assets/106ece3f-d94d-460e-9313-4a01f624a647"
+          alt={L('Sdcb Chats 界面截图', 'Sdcb Chats screenshot')}
+          class="block w-full"
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+    </div>
+  </section>
+
+  <!-- providers marquee -->
+  <section class="overflow-hidden border-y border-line py-6">
+    <div class="flex w-max animate-marquee gap-3 hover:[animation-play-state:paused]">
+      {
+        [...providers, ...providers].map((p) => (
+          <span class="rounded-lg border border-line bg-surface px-4 py-2 font-mono text-sm whitespace-nowrap text-fg-soft">{p}</span>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="container-x pt-24">
+    <p class="eyebrow">{L('功能', 'Features')}</p>
+    <h2 class="h-section mt-3">{L('为什么选择 Sdcb Chats', 'Why Sdcb Chats')}</h2>
+    <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        features.map((f, i) => (
+          <div class="card p-6" data-reveal style={`--delay:${(i % 3) * 70}ms`}>
+            <span class="grid size-9 place-items-center rounded-lg bg-brand-soft text-brand">
+              <Icon name={f.icon as any} size={17} />
+            </span>
+            <h3 class="mt-4 font-semibold">{f.title}</h3>
+            <p class="mt-1.5 text-sm leading-relaxed text-fg-soft">{f.body}</p>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="container-x pt-24">
+    <div class="grid items-start gap-10 lg:grid-cols-[1fr_1.4fr]">
+      <div>
+        <p class="eyebrow">{L('快速开始', 'Quick start')}</p>
+        <h2 class="h-section mt-3">{L('一条命令，跑起来', 'One command to run it')}</h2>
+        <p class="lead mt-4">
+          {L('需要 Docker。启动后访问 ', 'Requires Docker. Then open ')}<code class="rounded bg-surface-2 px-1.5 py-0.5 text-sm">http://localhost:8080</code>
+          {L('，用默认账号 ', ' and sign in with ')}<code class="rounded bg-surface-2 px-1.5 py-0.5 text-sm">chats</code> / <code class="rounded bg-surface-2 px-1.5 py-0.5 text-sm">RESET!!!</code>
+          {L(' 登录。', '.')}
+        </p>
+        <p class="mt-4 text-sm text-fg-mute">
+          {L('也提供 Windows / Linux / macOS 共 8 个平台的原生可执行文件。', 'Native executables for 8 platforms across Windows / Linux / macOS are also available.')}
+          <a href="https://github.com/sdcb/chats/blob/main/doc/zh-CN/downloads.md" target="_blank" rel="noopener" class="link ml-1">{L('下载', 'Downloads')}</a>
+        </p>
+      </div>
+      <CodeWindow code={dockerCmd} lang="bash" title="bash" uiLang={lang} />
+    </div>
+  </section>
+
+  <section class="container-x pt-24">
+    <div class="grid gap-12 lg:grid-cols-[1fr_1.5fr]">
+      <div>
+        <p class="eyebrow">{L('迭代', 'Cadence')}</p>
+        <h2 class="h-section mt-3">{L('1.x 的每一个版本', 'Every 1.x release')}</h2>
+        <p class="lead mt-4">
+          {
+            L(
+              '从 1.0 到 1.17，每个版本都有完整的发布说明。2.0 正在筹划中——想第一时间知道，Watch 仓库的 Releases 或者进群。',
+              'From 1.0 to 1.17, every release ships with full notes. 2.0 is being planned — watch the repo’s releases or join the group to hear first.',
+            )
+          }
+        </p>
+        <a href="https://github.com/sdcb/chats/blob/main/doc/zh-CN/release-notes/README.md" target="_blank" rel="noopener" class="link mt-5 inline-flex items-center gap-1 text-sm">{L('全部发布说明', 'All release notes')} <Icon name="arrowUpRight" size={14} /></a>
+      </div>
+      <ol class="grid grid-cols-2 gap-2 font-mono text-xs sm:grid-cols-3 md:grid-cols-4">
+        <li class="rounded-lg border border-dashed border-warn/50 px-3 py-2.5 text-warn">
+          <div class="text-sm font-semibold">2.0</div>
+          <div class="mt-0.5 opacity-80">{L('筹划中', 'planning')}</div>
+        </li>
+        {
+          minorReleases.map((h, i) => (
+            <li>
+              <a href={h.url} target="_blank" rel="noopener" class:list={['block rounded-lg border px-3 py-2.5 hover:border-line-strong', i === 0 ? 'border-brand/40 bg-brand-soft' : 'border-line bg-surface']}>
+                <div class:list={['text-sm font-semibold', i === 0 && 'text-brand']}>{h.name.replace(/\.\d+$/, '').replace(/^(\d+\.\d+)\.0$/, '$1')}</div>
+                <div class="mt-0.5 text-fg-mute">{fmtDate(h.publishedAt, lang)}</div>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <section class="container-x pt-24">
+    <div class="grid gap-12 lg:grid-cols-[1.5fr_1fr]">
+      <div>
+        <p class="eyebrow">{L('开发手记', 'Dev diary')}</p>
+        <h2 class="h-section mt-3">{L('写在 Chats 背后', 'Behind the scenes')}</h2>
+        <div class="mt-6 divide-y divide-line border-y border-line">
+          {chatsPosts.map((p) => <PostItem post={p} lang={lang} />)}
+        </div>
+      </div>
+      <div class="card self-start p-7">
+        <h3 class="text-lg font-semibold">{L('加入 Chats 交流群', 'Join the Chats community')}</h3>
+        <img
+          src={wechat.qr}
+          alt={L('Chats 微信群二维码', 'Chats WeChat group QR code')}
+          width="180"
+          height="180"
+          loading="lazy"
+          referrerpolicy="no-referrer"
+          class="mt-5 size-44 rounded-lg border border-line bg-white p-2"
+          onerror="this.style.display='none'"
+        />
+        <p class="mt-4 text-sm text-fg-soft">
+          {L('微信扫码入群。二维码过期或群满时，请加 QQ 群 498452653 获取新的入群码。', 'Scan with WeChat. If the code has expired or the group is full, join QQ group 498452653 instead.')}
+        </p>
+        <a href="https://qm.qq.com/q/AM8tY9cAsS" target="_blank" rel="noopener" class="btn-primary mt-5"><Icon name="users" /> QQ 498452653</a>
+      </div>
+    </div>
+  </section>
+</Base>

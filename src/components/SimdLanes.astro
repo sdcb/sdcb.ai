@@ -1,0 +1,76 @@
+---
+import type { Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const lanes = Array.from({ length: 8 }, (_, i) => i);
+const rows = [
+  { key: 'a', label: 'a[k]', hint: lang === 'zh' ? '广播' : 'broadcast' },
+  { key: 'b', label: 'b', hint: 'LoadVector256' },
+  { key: 'c', label: 'acc', hint: 'Fma.MultiplyAdd' },
+];
+---
+
+<div class="rounded-xl border border-line bg-surface p-4 font-mono text-[11px]" data-simd aria-hidden="true">
+  <div class="mb-3 flex items-center justify-between text-fg-mute">
+    <span><span class="text-brand">Vector256</span>&lt;float&gt; · 8 lanes</span>
+    <span data-simd-step class="tabular-nums">k = 0</span>
+  </div>
+  <div class="grid gap-1.5">
+    {
+      rows.map((r) => (
+        <div class="grid grid-cols-[3rem_repeat(8,1fr)] items-center gap-1">
+          <span class:list={['text-right pr-1', r.key === 'c' ? 'text-accent' : 'text-fg-mute']}>{r.label}</span>
+          {lanes.map((i) => (
+            <span
+              class:list={[
+                'rounded-[5px] border px-0 py-1.5 text-center tabular-nums transition-colors duration-300',
+                r.key === 'c' ? 'border-accent/30 bg-accent/10 text-fg' : 'border-line bg-surface-2 text-fg-soft',
+              ]}
+              data-lane={`${r.key}${i}`}
+            >
+              0.00
+            </span>
+          ))}
+        </div>
+      ))
+    }
+  </div>
+  <div class="mt-3 flex items-center justify-between text-fg-mute">
+    <span>acc = <span class="text-fg">a</span> × <span class="text-fg">b</span> + acc</span>
+    <span>{lang === 'zh' ? '一条指令，8 次乘加' : '1 instruction, 8 FMAs'}</span>
+  </div>
+</div>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-simd]');
+  if (root && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const cell = (k: string) => root.querySelector<HTMLElement>(`[data-lane="${k}"]`)!;
+    const step = root.querySelector<HTMLElement>('[data-simd-step]')!;
+    const acc = new Float32Array(8);
+    let k = 0;
+    const rnd = () => Math.round((Math.random() * 2 - 1) * 100) / 100;
+    const tick = () => {
+      if (document.hidden) return;
+      if (k === 24) {
+        acc.fill(0);
+        k = 0;
+      }
+      const a = rnd();
+      for (let i = 0; i < 8; i++) {
+        const b = rnd();
+        acc[i] = Math.fround(a * b + acc[i]);
+        cell(`a${i}`).textContent = a.toFixed(2);
+        cell(`b${i}`).textContent = b.toFixed(2);
+        const c = cell(`c${i}`);
+        c.textContent = acc[i].toFixed(2);
+        c.animate([{ backgroundColor: 'color-mix(in srgb, var(--c-accent) 35%, transparent)' }, {}], { duration: 500 });
+      }
+      step.textContent = `k = ${k++}`;
+    };
+    tick();
+    setInterval(tick, 900);
+  }
+</script>

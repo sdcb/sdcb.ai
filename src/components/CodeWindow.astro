@@ -1,0 +1,39 @@
+---
+import { Code } from 'astro:components';
+import Icon from './Icon.astro';
+import type { Lang } from '../i18n';
+
+interface Props {
+  code: string;
+  lang?: string;
+  title?: string;
+  uiLang: Lang;
+  copy?: boolean;
+  class?: string;
+}
+const { code, lang = 'csharp', title, uiLang, copy = true, class: cls = '' } = Astro.props;
+---
+
+<div class:list={['overflow-hidden rounded-xl border border-line bg-bg-soft shadow-2xl shadow-black/10', cls]}>
+  <div class="flex h-10 items-center gap-2 border-b border-line bg-surface px-4">
+    <span class="size-2.5 rounded-full bg-fg-mute/30"></span>
+    <span class="size-2.5 rounded-full bg-fg-mute/30"></span>
+    <span class="size-2.5 rounded-full bg-fg-mute/30"></span>
+    {title && <span class="ml-2 truncate font-mono text-xs text-fg-mute">{title}</span>}
+    {
+      copy && (
+        <button
+          type="button"
+          data-copy={code.trim()}
+          class="ml-auto inline-flex items-center gap-1.5 rounded px-2 py-1 font-mono text-[11px] text-fg-mute hover:bg-surface-2 hover:text-fg"
+        >
+          <Icon name="copy" size={12} />
+          <span data-copy-label>{uiLang === 'zh' ? '复制' : 'Copy'}</span>
+        </button>
+      )
+    }
+  </div>
+  <div class="overflow-x-auto px-5 py-4">
+    <Code code={code.trim()} lang={lang as any} themes={{ light: 'github-light', dark: 'github-dark-dimmed' }} defaultColor="light" />
+  </div>
+</div>

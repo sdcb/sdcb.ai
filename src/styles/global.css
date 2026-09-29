@@ -1,0 +1,147 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/jetbrains-mono';
+@import './components.css';
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+@theme {
+  --font-sans: 'Inter Variable', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei UI', 'Microsoft YaHei',
+    'Noto Sans SC', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Code', Consolas, 'Microsoft YaHei', monospace;
+
+  --color-bg: var(--c-bg);
+  --color-bg-soft: var(--c-bg-soft);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-line: var(--c-line);
+  --color-line-strong: var(--c-line-strong);
+  --color-fg: var(--c-fg);
+  --color-fg-soft: var(--c-fg-soft);
+  --color-fg-mute: var(--c-fg-mute);
+  --color-brand: var(--c-brand);
+  --color-brand-soft: var(--c-brand-soft);
+  --color-accent: var(--c-accent);
+  --color-ok: var(--c-ok);
+  --color-warn: var(--c-warn);
+
+  --animate-blink: blink 1.1s steps(1) infinite;
+  --animate-marquee: marquee 60s linear infinite;
+
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
+  }
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
+
+:root {
+  color-scheme: light;
+  --c-bg: #f7f7f5;
+  --c-bg-soft: #efeee9;
+  --c-surface: #ffffff;
+  --c-surface-2: #f3f2ee;
+  --c-line: rgb(20 20 30 / 0.09);
+  --c-line-strong: rgb(20 20 30 / 0.18);
+  --c-fg: #0d0d14;
+  --c-fg-soft: #3b3b48;
+  --c-fg-mute: #6d6d7a;
+  --c-brand: #5b3fe0;
+  --c-brand-soft: rgb(91 63 224 / 0.1);
+  --c-accent: #0891b2;
+  --c-ok: #15803d;
+  --c-warn: #b45309;
+  --grid-line: rgb(20 20 30 / 0.05);
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --c-bg: #07070b;
+  --c-bg-soft: #0c0c12;
+  --c-surface: #101017;
+  --c-surface-2: #16161f;
+  --c-line: rgb(255 255 255 / 0.07);
+  --c-line-strong: rgb(255 255 255 / 0.14);
+  --c-fg: #ededf2;
+  --c-fg-soft: #b4b4c2;
+  --c-fg-mute: #7c7c8c;
+  --c-brand: #8f7bff;
+  --c-brand-soft: rgb(143 123 255 / 0.12);
+  --c-accent: #3ddbd9;
+  --c-ok: #4ade80;
+  --c-warn: #fbbf24;
+  --grid-line: rgb(255 255 255 / 0.035);
+}
+
+@layer base {
+  html {
+    background: var(--c-bg);
+    color: var(--c-fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+  }
+  ::selection {
+    background: var(--c-brand);
+    color: white;
+  }
+  :focus-visible {
+    outline: 2px solid var(--c-brand);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  code,
+  kbd,
+  pre {
+    font-family: var(--font-mono);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+.js [data-reveal] {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: var(--delay, 0ms);
+}
+.js [data-reveal][data-revealed] {
+  opacity: 1;
+  transform: none;
+}
+
+dialog::backdrop {
+  background: rgb(0 0 0 / 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.astro-code {
+  background-color: transparent !important;
+  font-size: 12.5px;
+  line-height: 1.65;
+  tab-size: 4;
+}
+[data-theme='dark'] .astro-code,
+[data-theme='dark'] .astro-code span {
+  color: var(--shiki-dark) !important;
+  font-style: var(--shiki-dark-font-style) !important;
+}

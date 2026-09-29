@@ -1,0 +1,83 @@
+---
+import Icon from './Icon.astro';
+import { fmtNumber, href, t, type Lang } from '../i18n';
+import { dockerPulls, nugetDownloads, repo as findRepo } from '../data/snapshot';
+import type { Project } from '../data/projects';
+
+interface Props {
+  project: Project;
+  lang: Lang;
+  size?: 'md' | 'lg';
+}
+const { project: p, lang, size = 'md' } = Astro.props;
+const r = findRepo(p.repo);
+const stars = r?.stars ?? 0;
+const nuget = p.nuget ? nugetDownloads(p.nuget) : 0;
+const docker = p.docker ? dockerPulls(p.docker) : 0;
+const url = p.page ? href(lang, p.page) : (r?.url ?? `https://github.com/sdcb/${p.repo}`);
+const external = !p.page;
+const langColor: Record<string, string> = {
+  'C#': '#8f7bff',
+  TypeScript: '#3178c6',
+  JavaScript: '#e5c33b',
+  C: '#8a8a8a',
+  'C++': '#f34b7d',
+};
+---
+
+<a
+  href={url}
+  {...(external ? { target: '_blank', rel: 'noopener' } : {})}
+  class:list={['card group relative flex flex-col gap-3 p-5 hover:bg-surface-2/60', size === 'lg' && 'sm:p-6']}
+>
+  <div class="flex items-start justify-between gap-3">
+    <h3 class:list={['font-mono font-semibold tracking-tight', size === 'lg' ? 'text-lg' : 'text-[15px]']}>
+      {p.name ?? p.repo}
+    </h3>
+    <Icon name={external ? 'arrowUpRight' : 'arrowRight'} class="mt-1 shrink-0 text-fg-mute transition-transform group-hover:translate-x-0.5 group-hover:text-fg" />
+  </div>
+  <p class="text-sm leading-relaxed text-fg-soft">{t(lang, p.tagline)}</p>
+  {
+    p.tags && size === 'lg' && (
+      <div class="flex flex-wrap gap-1.5">
+        {p.tags.map((tag) => (
+          <span class="chip">{tag}</span>
+        ))}
+      </div>
+    )
+  }
+  <div class="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 font-mono text-xs text-fg-mute">
+    {
+      r?.language && (
+        <span class="inline-flex items-center gap-1.5">
+          <span class="size-2 rounded-full" style={`background:${langColor[r.language] ?? '#888'}`} />
+          {r.language}
+        </span>
+      )
+    }
+    {
+      stars > 0 && (
+        <span class="inline-flex items-center gap-1" title="GitHub stars">
+          <Icon name="star" size={12} />
+          <span data-repo-stars={p.repo}>{fmtNumber(stars, 'en')}</span>
+        </span>
+      )
+    }
+    {
+      nuget > 0 && (
+        <span class="inline-flex items-center gap-1" title="NuGet downloads">
+          <Icon name="download" size={12} />
+          {fmtNumber(nuget, lang)}
+        </span>
+      )
+    }
+    {
+      docker > 0 && (
+        <span class="inline-flex items-center gap-1" title="Docker pulls">
+          <Icon name="box" size={12} />
+          {fmtNumber(docker, lang)}
+        </span>
+      )
+    }
+  </div>
+</a>

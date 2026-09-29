@@ -1,0 +1,201 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import StatBar from '../components/StatBar.astro';
+import { href, t, type Lang } from '../i18n';
+import { site } from '../data/site';
+import { timeline, talks } from '../data/timeline';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const L = (zh: string, en: string) => t(lang, { zh, en });
+
+const principles = [
+  {
+    icon: 'terminal',
+    title: L('能用 C# 写的，就用 C# 写', 'If it can be C#, it is C#'),
+    body: L('推理引擎、SIMD 内核、ONNX 解释器——“.NET 做不了”往往只是还没人去做。', 'Inference engines, SIMD kernels, ONNX interpreters — “.NET can’t do that” usually means nobody has tried yet.'),
+  },
+  {
+    icon: 'zap',
+    title: L('用数据说话', 'Measure, don’t guess'),
+    body: L('每个性能结论都附上基准，能放进 CI 的就放进 CI，多平台跑给你看。', 'Every performance claim comes with a benchmark — in CI, across platforms, whenever possible.'),
+  },
+  {
+    icon: 'github',
+    title: L('开源且可复现', 'Open and reproducible'),
+    body: L('代码、基准、示例和博客里的 LINQPad 脚本都公开，拿去就能跑。', 'Code, benchmarks, samples and the LINQPad scripts behind every post are public and runnable.'),
+  },
+  {
+    icon: 'book',
+    title: L('把事情讲清楚', 'Explain it well'),
+    body: L('一个项目发布，通常伴随一篇把来龙去脉讲透的文章。', 'A release usually comes with a post that explains the why and the how.'),
+  },
+];
+---
+
+<Base
+  lang={lang}
+  title={L('关于', 'About')}
+  description={L('关于 ZHOU Jie（周杰 / sdcb）：微软 MVP，《.NET骚操作》作者，SimdPaddleOCR、PaddleSharp、Sdcb Chats 等开源项目作者。', 'About ZHOU Jie (sdcb): Microsoft MVP, author of the “.NET骚操作” blog and of SimdPaddleOCR, PaddleSharp and Sdcb Chats.')}
+>
+  <section class="container-x pt-20 sm:pt-24">
+    <div class="grid items-center gap-10 lg:grid-cols-[auto_1fr]">
+      <div class="relative w-fit">
+        <div class="absolute -inset-3 rounded-[28px] bg-gradient-to-br from-brand/40 to-accent/30 blur-2xl"></div>
+        <img src={site.avatar} alt="ZHOU Jie" width="176" height="176" class="relative size-44 rounded-3xl border border-line-strong" />
+      </div>
+      <div>
+        <p class="eyebrow">{L('关于', 'About')}</p>
+        <h1 class="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">
+          ZHOU Jie <span class="text-fg-mute">{L('· 周杰', '')}</span>
+        </h1>
+        <p class="mt-3 font-mono text-sm text-fg-soft">
+          <b class="text-brand">S</b>erving <b class="text-brand">d</b>otNET, <b class="text-brand">c</b>onstructing <b class="text-brand">b</b>rilliance
+        </p>
+        <div class="mt-5 flex flex-wrap gap-2">
+          <a href={site.mvpProfile} target="_blank" rel="noopener" class="chip border-brand/40 py-1 text-brand"><Icon name="award" size={12} /> Microsoft MVP · C# / .NET</a>
+          <span class="chip py-1">{L('《.NET骚操作》作者', 'Author of “.NET骚操作”')}</span>
+          <span class="chip py-1">.NET Conf China {L('讲师', 'speaker')}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="prose-sd mt-12 grid max-w-3xl gap-4 text-[17px] leading-relaxed text-fg-soft">
+      {
+        lang === 'zh' ? (
+          <>
+            <p>
+              你好，我是周杰，网名 <strong class="text-fg">sdcb</strong>——它是 “<strong class="text-fg">S</strong>erving <strong class="text-fg">d</strong>otNET,{' '}
+              <strong class="text-fg">c</strong>onstructing <strong class="text-fg">b</strong>rilliance” 的缩写，也是我的个人品牌。我是一名微软 MVP，专注 C# / .NET。
+            </p>
+            <p>
+              2013 年我在博客园写下第一篇关于 Direct2D 的文章，后来有了《.NET骚操作》博客和公众号。这些年我做的事情大致可以概括成一句话：
+              <strong class="text-fg">把别人觉得 .NET 做不了的事，用 .NET 做出来</strong>——从 OCR、目标检测、音视频、RAW 照片，到大模型网关，再到今天完全用 C# 手写的推理引擎。
+            </p>
+            <p>
+              我维护的 PaddleSharp、OpenVINO.NET、Sdcb.FFmpeg 等库被很多团队用在生产环境里；Sdcb Chats 是我做的开源大模型网关；最近我把几乎全部精力放在
+              SimdPaddleOCR 上，它不再依赖任何原生推理库，2.0 正在加入 Vulkan / Metal GPU 支持。
+            </p>
+          </>
+        ) : (
+          <>
+            <p>
+              Hi, I’m ZHOU Jie, better known as <strong class="text-fg">sdcb</strong> — short for “<strong class="text-fg">S</strong>erving{' '}
+              <strong class="text-fg">d</strong>otNET, <strong class="text-fg">c</strong>onstructing <strong class="text-fg">b</strong>rilliance”. I’m a Microsoft MVP focused on C# and .NET.
+            </p>
+            <p>
+              I wrote my first blog post, about Direct2D, in 2013; the “.NET骚操作” blog and WeChat account followed. What I do boils down to one line:
+              <strong class="text-fg">building the things people think .NET can’t do — in .NET</strong>. OCR, object detection, video, RAW photos, an LLM gateway, and now an
+              inference engine written entirely in C#.
+            </p>
+            <p>
+              Libraries I maintain — PaddleSharp, OpenVINO.NET, Sdcb.FFmpeg and more — run in production at many companies; Sdcb Chats is my open-source LLM gateway. These days
+              most of my time goes into SimdPaddleOCR, which drops native inference runtimes entirely, with Vulkan / Metal GPU support arriving in 2.0.
+            </p>
+          </>
+        )
+      }
+    </div>
+
+    <div class="mt-12"><StatBar lang={lang} /></div>
+  </section>
+
+  <section class="container-x pt-24">
+    <p class="eyebrow">{L('原则', 'Principles')}</p>
+    <h2 class="h-section mt-3">{L('我做开源的方式', 'How I build in the open')}</h2>
+    <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {
+        principles.map((p, i) => (
+          <div class="card p-6" data-reveal style={`--delay:${i * 70}ms`}>
+            <span class="grid size-9 place-items-center rounded-lg bg-brand-soft text-brand">
+              <Icon name={p.icon as any} size={17} />
+            </span>
+            <h3 class="mt-4 font-semibold">{p.title}</h3>
+            <p class="mt-1.5 text-sm leading-relaxed text-fg-soft">{p.body}</p>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="container-x pt-24">
+    <p class="eyebrow">{L('时间线', 'Timeline')}</p>
+    <h2 class="h-section mt-3">{L('十几年，一条主线', 'A decade and more, one thread')}</h2>
+    <ol class="relative mt-12 ml-3 border-l border-line">
+      {
+        timeline.map((m) => (
+          <li class="relative pb-12 pl-8 last:pb-0" data-reveal>
+            <span
+              class:list={[
+                'absolute top-1 -left-[7px] size-3.5 rounded-full border-2',
+                m.highlight ? 'border-brand bg-brand' : 'border-line-strong bg-bg',
+              ]}
+            />
+            <div class="font-mono text-sm text-brand">{m.date}</div>
+            <h3 class="mt-1 text-lg font-semibold">{t(lang, m.title)}</h3>
+            <p class="mt-1.5 max-w-2xl text-fg-soft">{t(lang, m.body)}</p>
+            {m.link && (
+              <a href={m.link} target="_blank" rel="noopener" class="link mt-2 inline-flex items-center gap-1 text-sm">
+                {L('相关链接', 'Link')} <Icon name="arrowUpRight" size={13} />
+              </a>
+            )}
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <section class="container-x pt-24">
+    <div class="grid gap-10 lg:grid-cols-2">
+      <div>
+        <p class="eyebrow">{L('演讲', 'Talks')}</p>
+        <h2 class="h-section mt-3">{L('技术大会分享', 'Conference talks')}</h2>
+        <ul class="mt-8 divide-y divide-line border-y border-line">
+          {
+            talks.map((k) => (
+              <li>
+                <a href={k.link} target="_blank" rel="noopener" class="group grid gap-1 py-4 sm:grid-cols-[6rem_1fr]">
+                  <span class="font-mono text-xs text-fg-mute sm:pt-1">{k.date}</span>
+                  <span>
+                    <span class="block font-medium group-hover:text-brand">{t(lang, k.title)}</span>
+                    <span class="text-sm text-fg-mute">{t(lang, k.event)}</span>
+                  </span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+      <div>
+        <p class="eyebrow">{L('联系', 'Contact')}</p>
+        <h2 class="h-section mt-3">{L('找到我', 'Find me')}</h2>
+        <div class="mt-8 grid gap-3 sm:grid-cols-2">
+          {
+            [
+              { icon: 'github', label: 'GitHub', sub: '@sdcb', url: site.links.github },
+              { icon: 'book', label: L('博客园', 'cnblogs'), sub: '.NET骚操作', url: site.links.blog },
+              { icon: 'box', label: 'NuGet', sub: 'sdflysha', url: site.links.nuget },
+              { icon: 'box', label: 'Docker Hub', sub: 'sdcb', url: site.links.docker },
+              { icon: 'users', label: L('QQ / 微信群', 'QQ / WeChat'), sub: L('社区页', 'Community'), url: href(lang, '/community') },
+              { icon: 'award', label: 'Microsoft MVP', sub: L('个人主页', 'Profile'), url: site.mvpProfile },
+            ].map((c) => (
+              <a href={c.url} {...(c.url.startsWith('http') ? { target: '_blank', rel: 'noopener' } : {})} class="card flex items-center gap-3 p-4 hover:bg-surface-2/60">
+                <Icon name={c.icon as any} size={18} class="text-fg-soft" />
+                <span>
+                  <span class="block text-sm font-medium">{c.label}</span>
+                  <span class="font-mono text-xs text-fg-mute">{c.sub}</span>
+                </span>
+              </a>
+            ))
+          }
+        </div>
+        <p class="mt-5 text-sm text-fg-mute">
+          {L('项目相关的问题，最快的方式是在对应仓库提 Issue。', 'For project questions, opening an issue on the repo is the fastest route.')}
+        </p>
+      </div>
+    </div>
+  </section>
+</Base>

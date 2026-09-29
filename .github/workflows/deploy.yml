@@ -7,6 +7,14 @@ on:
   pull_request:
     branches:
       - main
+  schedule:
+    # 06:17 Asia/Shanghai — refresh stars / downloads / blog posts daily
+    - cron: '17 22 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   deploy:
@@ -14,13 +22,44 @@ jobs:
     permissions:
       contents: read
       deployments: write
+    env:
+      # user-writable SDK location so `dotnet workload install` needs no sudo
+      DOTNET_INSTALL_DIR: ${{ github.workspace }}/../.dotnet
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install wasm-tools workload
+        run: dotnet workload install wasm-tools
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Fetch live data
+        run: npm run fetch-data
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build OCR WebAssembly playground
+        run: npm run build:ocr
+
+      - name: Build site
+        run: npm run build
 
       - name: Publish to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy . --project-name=${{ secrets.CLOUDFLARE_PAGES_PROJECT }}
+          command: pages deploy dist --project-name=${{ secrets.CLOUDFLARE_PAGES_PROJECT }} --branch=${{ github.head_ref || github.ref_name }}

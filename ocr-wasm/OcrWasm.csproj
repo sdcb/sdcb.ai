@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk.WebAssembly">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <UseSystemResourceKeys>true</UseSystemResourceKeys>
+    <WasmEnableSIMD>true</WasmEnableSIMD>
+    <PublishTrimmed>true</PublishTrimmed>
+    <!-- needs the wasm-tools workload; the Mono interpreter is ~10x slower on the SIMD kernels -->
+    <RunAOTCompilation>true</RunAOTCompilation>
+    <WasmStripILAfterAOT>true</WasmStripILAfterAOT>
+    <!-- Cloudflare compresses on the fly; skip the .br/.gz duplicates -->
+    <CompressionEnabled>false</CompressionEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Sdcb.SimdPaddleOCR" Version="1.4.2" />
+    <PackageReference Include="Sdcb.SimdPaddleOCR.Models.ChineseV6Tiny" Version="1.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <TrimmerRootAssembly Include="Sdcb.SimdPaddleOCR" />
+    <TrimmerRootAssembly Include="Sdcb.SimdPaddleOCR.Models.ChineseV6Tiny" />
+    <TrimmerRootAssembly Include="Sdcb.SimdPaddleOCR.Models.TextLineOrientation" />
+  </ItemGroup>
+
+</Project>

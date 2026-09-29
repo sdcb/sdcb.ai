@@ -1,0 +1,488 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import CodeWindow from '../components/CodeWindow.astro';
+import BarCompare from '../components/BarCompare.astro';
+import PostItem from '../components/PostItem.astro';
+import { href, t, fmtNumber, fmtDate, type Lang } from '../i18n';
+import { snapshot, repo, release, nugetDownloads } from '../data/snapshot';
+import { posts } from '../data/writing';
+import { wechatGroups } from '../data/community';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const L = (zh: string, en: string) => t(lang, { zh, en });
+
+const r = repo('SimdPaddleOCR');
+const rel = release('SimdPaddleOCR');
+const history = snapshot.github.history.SimdPaddleOCR ?? [];
+const packages = snapshot.nuget.packages.filter((p) => p.id.toLowerCase().startsWith('sdcb.simdpaddleocr'));
+const totalDownloads = nugetDownloads(['Sdcb.SimdPaddleOCR']);
+const seriesPosts = posts.filter((p) => p.series === 'simd' && /SimdPaddleOCR|向量化/.test(p.title));
+const ocrWechat = wechatGroups.find((g) => g.key === 'ocr')!;
+
+const install = `dotnet add package Sdcb.SimdPaddleOCR
+dotnet add package Sdcb.SimdPaddleOCR.Models.ChineseV6Tiny`;
+
+const samples = [
+  {
+    id: 'imagesharp',
+    label: 'ImageSharp',
+    code: `using System.Runtime.InteropServices;
+using Sdcb.SimdPaddleOCR;
+using Sdcb.SimdPaddleOCR.Models.ChineseV6Tiny;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+
+using PaddleOcrAll ocr = await PaddleOcrAll.LoadAsync(ChineseV6TinyModels.Default);
+using Image<Rgba32> image = await Image.LoadAsync<Rgba32>("sample.jpg");
+
+Rgba32[] pixels = new Rgba32[image.Width * image.Height];
+image.CopyPixelDataTo(pixels);
+
+PaddleOcrResult result = ocr.Run(MemoryMarshal.AsBytes(pixels.AsSpan()),
+    image.Width, image.Height, format: ImagePixelFormat.Rgba32);
+Console.WriteLine(result.Text);`,
+  },
+  {
+    id: 'skiasharp',
+    label: 'SkiaSharp',
+    code: `using SkiaSharp;
+
+using SKBitmap bitmap = SKBitmap.Decode("sample.jpg").Copy(SKColorType.Bgra8888);
+unsafe
+{
+    PaddleOcrResult result = ocr.Run(
+        new ReadOnlySpan<byte>((byte*)bitmap.GetPixels(), bitmap.RowBytes * bitmap.Height),
+        bitmap.Width, bitmap.Height, bitmap.RowBytes, ImagePixelFormat.Bgra32);
+}`,
+  },
+  {
+    id: 'opencv',
+    label: 'OpenCvSharp',
+    code: `using OpenCvSharp;
+
+using Mat image = Cv2.ImRead("sample.jpg", ImreadModes.Color);
+int stride = (int)image.Step();
+unsafe
+{
+    PaddleOcrResult result = ocr.Run(
+        new ReadOnlySpan<byte>((byte*)image.Data, stride * image.Height),
+        image.Width, image.Height, stride, ImagePixelFormat.Bgr24);
+}`,
+  },
+  {
+    id: 'bitmap',
+    label: 'System.Drawing',
+    code: `using System.Drawing;
+using System.Drawing.Imaging;
+
+using Bitmap bitmap = new("sample.jpg");
+BitmapData data = bitmap.LockBits(new(0, 0, bitmap.Width, bitmap.Height),
+    ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+try
+{
+    unsafe
+    {
+        PaddleOcrResult result = ocr.Run(
+            new ReadOnlySpan<byte>((byte*)data.Scan0, data.Stride * bitmap.Height),
+            bitmap.Width, bitmap.Height, data.Stride, ImagePixelFormat.Bgra32);
+    }
+}
+finally { bitmap.UnlockBits(data); }`,
+  },
+];
+
+const backends = [
+  { name: 'AVX2 · FMA', note: 'x64', icon: 'cpu' },
+  { name: 'AVX-512 · VNNI', note: 'x64', icon: 'cpu' },
+  { name: 'AdvSIMD (NEON)', note: 'ARM64', icon: 'cpu' },
+  { name: 'Vector<T> / scalar', note: 'netstandard2.0', icon: 'cpu' },
+  { name: 'Vulkan', note: 'Windows · Linux · Android', icon: 'zap', gpu: true },
+  { name: 'Metal', note: 'macOS', icon: 'zap', gpu: true },
+];
+
+const matrix: { os: string; archs: string[]; gpu: string }[] = [
+  { os: 'Windows', archs: ['x64', 'x86', 'ARM64'], gpu: 'Vulkan' },
+  { os: 'Linux', archs: ['x64', 'ARM64'], gpu: 'Vulkan' },
+  { os: 'macOS', archs: ['x64', 'ARM64'], gpu: 'Metal' },
+  { os: 'Android', archs: ['ARM64'], gpu: 'Vulkan' },
+];
+---
+
+<Base
+  lang={lang}
+  title="SimdPaddleOCR"
+  description={L(
+    'SimdPaddleOCR：纯 C# 的 PP-OCRv6 推理库。手写 SIMD 内核与 GEMM、托管 ONNX 解释器、零原生依赖，2.0 支持 Vulkan / Metal GPU。',
+    'SimdPaddleOCR: pure-C# PP-OCRv6 inference. Hand-written SIMD kernels and GEMM, a managed ONNX interpreter, zero native dependencies; Vulkan / Metal GPU in 2.0.',
+  )}
+>
+  <!-- HERO -->
+  <section class="relative overflow-hidden border-b border-line">
+    <div class="grid-bg pointer-events-none absolute inset-0 [mask-image:linear-gradient(to_bottom,black,transparent)]"></div>
+    <div class="pointer-events-none absolute -top-48 right-0 h-[500px] w-[700px] rounded-full bg-accent/10 blur-[120px]"></div>
+    <div class="container-x relative py-20 sm:py-28">
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="chip border-brand/40 text-brand">{L('旗舰项目', 'Flagship')}</span>
+        {rel && <a href={rel.url} target="_blank" rel="noopener" class="chip hover:text-fg">latest {rel.tag} · {fmtDate(rel.publishedAt, lang)}</a>}
+        <span class="chip">Apache-2.0</span>
+      </div>
+      <h1 class="mt-6 font-mono text-5xl font-bold tracking-tight sm:text-7xl">
+        Simd<span class="gradient-text">PaddleOCR</span>
+      </h1>
+      <p class="mt-6 max-w-3xl text-xl leading-relaxed text-pretty text-fg-soft sm:text-2xl">
+        {
+          L(
+            '一个纯 C# 写成的完整 OCR 推理引擎。不依赖 Paddle Inference、ONNX Runtime，也不需要 OpenCV 原生库。',
+            'A complete OCR inference engine written entirely in C#. No Paddle Inference, no ONNX Runtime, no native OpenCV.',
+          )
+        }
+      </p>
+      <div class="mt-9 flex flex-wrap items-center gap-3">
+        <a href={href(lang, '/simdpaddleocr/playground')} class="btn-brand"><Icon name="sparkles" /> {L('在浏览器里试试', 'Try it in your browser')}</a>
+        <a href="https://github.com/sdcb/SimdPaddleOCR" target="_blank" rel="noopener" class="btn-ghost">
+          <Icon name="github" /> GitHub
+          <span class="border-l border-line-strong pl-2 font-mono text-xs text-fg-soft" data-repo-stars="SimdPaddleOCR">{fmtNumber(r?.stars ?? 0, 'en')}</span>
+        </a>
+        <a href="https://www.nuget.org/packages/Sdcb.SimdPaddleOCR" target="_blank" rel="noopener" class="btn-ghost">NuGet</a>
+      </div>
+      <div class="mt-10 max-w-xl">
+        <CodeWindow code={install} lang="powershell" title={L('安装', 'Install')} uiLang={lang} />
+      </div>
+    </div>
+  </section>
+
+  <!-- KEY FACTS -->
+  <section class="container-x mt-16">
+    <div class="grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4 [&>*]:bg-surface">
+    {
+      [
+        [L('0 个', '0'), L('原生推理依赖', 'native inference deps')],
+        ['0.43 MB', L('核心包体积（nupkg）', 'core package (nupkg)')],
+        ['2.36%', L('tiny 模型 CER（CI 数据集）', 'tiny-model CER on CI set')],
+        ['−300 MB', L('1.4 相对 1.3 的峰值内存', 'peak memory, 1.4 vs 1.3')],
+      ].map(([v, l]) => (
+        <div class="px-6 py-6">
+          <div class="font-mono text-3xl font-semibold tracking-tight">{v}</div>
+          <div class="mt-1 text-sm text-fg-mute">{l}</div>
+        </div>
+      ))
+    }
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section class="container-x pt-24">
+    <div class="grid gap-12 lg:grid-cols-2">
+      <div>
+        <p class="eyebrow">{L('为什么', 'Why')}</p>
+        <h2 class="h-section mt-3">{L('PaddleSharp 与 OpenVINO.NET 在 AI 时代的彻底焕新', 'A clean-slate successor to PaddleSharp and OpenVINO.NET')}</h2>
+        <div class="mt-6 space-y-4 leading-relaxed text-fg-soft">
+          <p>
+            {
+              L(
+                'PaddleSharp 和 OpenVINO.NET 已经帮很多人把 OCR 跑进了 .NET，但它们都得背着几十上百 MB 的原生运行时：换一个平台、换一个 CPU 架构，就要换一套 native 包，部署和排错都很痛苦。',
+                'PaddleSharp and OpenVINO.NET brought OCR to a lot of .NET apps — but both drag along tens to hundreds of MB of native runtime. New platform or CPU architecture? New native packages, painful deployment and debugging.',
+              )
+            }
+          </p>
+          <p>
+            {
+              L(
+                'SimdPaddleOCR 换了个思路：模型用自带的托管 ONNX 解释器加载，卷积、GEMM 等算子全部用 C# 的硬件内在函数手写，运行时按 CPU 能力自动选择 AVX-512、AVX2、NEON 或纯 Vector 路径。结果是一个 NuGet 包到处跑，连 NativeAOT 和 .NET Framework 4.8 都不例外。',
+                'SimdPaddleOCR takes a different route: models are loaded by a bundled managed ONNX interpreter; convolution, GEMM and friends are hand-written with C# hardware intrinsics, dispatching at runtime to AVX-512, AVX2, NEON or portable Vector code. One NuGet package runs everywhere — including NativeAOT and .NET Framework 4.8.',
+              )
+            }
+          </p>
+          <p>
+            {
+              L(
+                '核心 API 只接收像素内存（BGR24 / RGB24 / BGRA32 / RGBA32），不强迫你引入任何图像库。ImageSharp、SkiaSharp、OpenCvSharp、System.Drawing，想用哪个用哪个。',
+                'The core API just takes pixel memory (BGR24 / RGB24 / BGRA32 / RGBA32) and never forces an imaging library on you — use ImageSharp, SkiaSharp, OpenCvSharp or System.Drawing.',
+              )
+            }
+          </p>
+        </div>
+      </div>
+
+      <!-- architecture -->
+      <div class="card p-6 font-mono text-xs" data-reveal>
+        <div class="text-fg-mute">{L('推理流水线', 'Pipeline')}</div>
+        <div class="mt-3 grid grid-cols-[auto_1fr_auto_1fr_auto_1fr_auto] items-center gap-2 text-center">
+          <span class="rounded-md border border-line bg-surface-2 px-2 py-2">{L('像素', 'pixels')}</span>
+          <span class="h-px bg-line-strong"></span>
+          <span class="rounded-md border border-brand/40 bg-brand-soft px-2 py-2 text-brand">DET</span>
+          <span class="h-px bg-line-strong"></span>
+          <span class="rounded-md border border-brand/40 bg-brand-soft px-2 py-2 text-brand">CLS</span>
+          <span class="h-px bg-line-strong"></span>
+          <span class="rounded-md border border-brand/40 bg-brand-soft px-2 py-2 text-brand">REC</span>
+        </div>
+        <div class="mt-2 grid grid-cols-3 gap-2 text-center text-[10px] text-fg-mute">
+          <span>{L('文本检测', 'detect')}</span><span>{L('方向分类', 'orient')}</span><span>{L('文字识别', 'recognize')}</span>
+        </div>
+
+        <div class="mt-6 rounded-lg border border-line bg-surface-2 px-3 py-3 text-center">
+          {L('托管 ONNX 解释器', 'Managed ONNX interpreter')}
+          <span class="text-fg-mute"> · NHWC graph · session cache</span>
+        </div>
+        <div class="mx-auto h-4 w-px bg-line-strong"></div>
+        <div class="rounded-lg border border-line bg-surface-2 px-3 py-3 text-center">
+          Conv · GEMM · Pooling · Activation · Resize
+          <span class="text-fg-mute"> — {L('C# 手写算子', 'hand-written in C#')}</span>
+        </div>
+        <div class="mx-auto h-4 w-px bg-line-strong"></div>
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {
+            backends.map((b) => (
+              <div class:list={['rounded-lg border px-2.5 py-2.5', b.gpu ? 'border-accent/40 bg-accent/10' : 'border-line bg-surface']}>
+                <div class:list={['font-semibold', b.gpu ? 'text-accent' : 'text-fg']}>{b.name}</div>
+                <div class="mt-0.5 text-[10px] text-fg-mute">{b.note}</div>
+              </div>
+            ))
+          }
+        </div>
+        <p class="mt-4 text-[11px] text-fg-mute">
+          {L('青色为 2.0（feature/2.0 分支）新增的 GPU 后端，仅 net10.0。', 'Teal: GPU backends new in 2.0 (feature/2.0), net10.0 only.')}
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CODE -->
+  <section class="container-x pt-24">
+    <p class="eyebrow">{L('上手', 'Quick start')}</p>
+    <h2 class="h-section mt-3">{L('选你喜欢的图像库，三行代码出结果', 'Bring your own imaging library')}</h2>
+    <div class="mt-8" data-tabs>
+      <div class="flex flex-wrap gap-1.5" role="tablist">
+        {
+          samples.map((s, i) => (
+            <button
+              type="button"
+              role="tab"
+              data-tab={s.id}
+              aria-selected={i === 0 ? 'true' : 'false'}
+              class="rounded-md border border-line px-3 py-1.5 font-mono text-xs text-fg-soft aria-selected:border-brand/50 aria-selected:bg-brand-soft aria-selected:text-brand"
+            >
+              {s.label}
+            </button>
+          ))
+        }
+      </div>
+      {
+        samples.map((s, i) => (
+          <div data-panel={s.id} hidden={i !== 0} class="mt-4">
+            <CodeWindow code={s.code} title="Program.cs" uiLang={lang} />
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- PERF -->
+  <section class="container-x pt-24">
+    <p class="eyebrow">{L('性能', 'Performance')}</p>
+    <h2 class="h-section mt-3">{L('每个版本都更快、更省', 'Faster and leaner, every release')}</h2>
+    <p class="lead mt-4 max-w-3xl">
+      {
+        L(
+          '数据来自仓库 README 与 GitHub Actions 多平台基准（去掉首张预热后的中位墙钟）。每次 CI 都会在 Windows / Linux / macOS 多架构上重跑一遍。',
+          'Numbers from the README and the multi-platform GitHub Actions benchmark (median wall-clock, warm-up excluded). CI re-runs them on Windows / Linux / macOS for every change.',
+        )
+      }
+    </p>
+    <div class="mt-10 grid gap-5 lg:grid-cols-3">
+      <div class="card p-6" data-reveal>
+        <h3 class="text-sm font-medium">{L('Ryzen 7 5800X · 平均耗时 / 张', 'Ryzen 7 5800X · mean per image')}</h3>
+        <p class="mt-1 mb-5 text-xs text-fg-mute">4 workers · 99 images · net10 AVX2</p>
+        <BarCompare
+          unit=" ms"
+          beforeLabel="1.3.0"
+          afterLabel="1.4.2"
+          rows={[
+            { label: 'tiny', before: 86.0, after: 63.1 },
+            { label: 'small', before: 222, after: 200 },
+            { label: 'medium', before: 628, after: 585 },
+          ]}
+        />
+      </div>
+      <div class="card p-6" data-reveal style="--delay:80ms">
+        <h3 class="text-sm font-medium">{L('GitHub Runner · tiny 中位耗时', 'GitHub runner · tiny median')}</h3>
+        <p class="mt-1 mb-5 text-xs text-fg-mute">linux-arm64 N2 · win-x64 EPYC 7763</p>
+        <BarCompare
+          unit=" ms"
+          beforeLabel="1.3.0"
+          afterLabel="1.4.2"
+          rows={[
+            { label: 'arm64 AdvSIMD', before: 241, after: 180 },
+            { label: 'arm64 netstandard2.0', before: 374, after: 295 },
+            { label: 'x64 netstandard2.0', before: 343, after: 228 },
+            { label: 'x64 no-AVX', before: 481, after: 380 },
+          ]}
+        />
+      </div>
+      <div class="card p-6" data-reveal style="--delay:160ms">
+        <h3 class="text-sm font-medium">{L('工作集峰值', 'Peak working set')}</h3>
+        <p class="mt-1 mb-5 text-xs text-fg-mute">tiny · 4 workers</p>
+        <BarCompare
+          unit=" MB"
+          beforeLabel="1.3.0"
+          afterLabel="1.4.2"
+          rows={[
+            { label: 'win-x64', before: 817, after: 515 },
+            { label: 'linux-arm64', before: 840, after: 572 },
+          ]}
+        />
+        <p class="mt-6 text-xs leading-relaxed text-fg-mute">
+          {L('本机 CER：tiny 2.78% → 2.37%，small 0.60% → 0.41%，medium 0.67% → 0.14%。', 'Local CER: tiny 2.78% → 2.37%, small 0.60% → 0.41%, medium 0.67% → 0.14%.')}
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLATFORMS -->
+  <section class="container-x pt-24">
+    <div class="grid gap-10 lg:grid-cols-[1fr_1.3fr]">
+      <div>
+        <p class="eyebrow">{L('平台', 'Platforms')}</p>
+        <h2 class="h-section mt-3">{L('一个包，到处都能跑', 'One package, everywhere')}</h2>
+        <ul class="mt-6 space-y-3 text-sm text-fg-soft">
+          <li class="flex gap-2.5"><Icon name="check" class="mt-0.5 shrink-0 text-ok" />{L('目标框架：net10.0 与 netstandard2.0（含 .NET Framework 4.8）', 'Targets net10.0 and netstandard2.0 (incl. .NET Framework 4.8)')}</li>
+          <li class="flex gap-2.5"><Icon name="check" class="mt-0.5 shrink-0 text-ok" />{L('NativeAOT 兼容（IsAotCompatible）', 'NativeAOT compatible (IsAotCompatible)')}</li>
+          <li class="flex gap-2.5"><Icon name="check" class="mt-0.5 shrink-0 text-ok" />{L('模型从程序集嵌入资源直接加载，不解压、不写临时文件', 'Models load straight from embedded resources — no extraction, no temp files')}</li>
+          <li class="flex gap-2.5"><Icon name="check" class="mt-0.5 shrink-0 text-ok" />{L('骁龙 8 Gen 3 上实测 CPU 与 Vulkan', 'Measured on Snapdragon 8 Gen 3, CPU and Vulkan')}</li>
+        </ul>
+      </div>
+      <div class="overflow-hidden rounded-xl border border-line">
+        <table class="w-full text-left font-mono text-xs">
+          <thead class="bg-surface-2 text-fg-mute">
+            <tr>
+              <th class="px-4 py-3 font-medium">OS</th>
+              <th class="px-4 py-3 font-medium">CPU</th>
+              <th class="px-4 py-3 font-medium">GPU (2.0)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-line bg-surface">
+            {
+              matrix.map((m) => (
+                <tr>
+                  <td class="px-4 py-3.5 font-semibold text-fg">{m.os}</td>
+                  <td class="px-4 py-3.5">
+                    <div class="flex flex-wrap gap-1.5">
+                      {m.archs.map((a) => (
+                        <span class="chip">{a}</span>
+                      ))}
+                    </div>
+                  </td>
+                  <td class="px-4 py-3.5">
+                    <span class="chip border-accent/40 text-accent">{m.gpu}</span>
+                  </td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- PACKAGES -->
+  <section class="container-x pt-24">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <p class="eyebrow">NuGet</p>
+        <h2 class="h-section mt-3">{L('包与模型', 'Packages & models')}</h2>
+      </div>
+      <p class="font-mono text-sm text-fg-mute">{L('累计下载', 'Total downloads')} <b class="text-fg">{fmtNumber(totalDownloads, lang)}</b></p>
+    </div>
+    <div class="mt-8 divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
+      {
+        packages.map((p) => (
+          <a
+            href={`https://www.nuget.org/packages/${p.id}`}
+            target="_blank"
+            rel="noopener"
+            class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 hover:bg-surface-2"
+          >
+            <span class="font-mono text-sm">{p.id}</span>
+            <span class="flex gap-5 font-mono text-xs text-fg-mute">
+              <span>v{p.version}</span>
+              <span class="inline-flex items-center gap-1">
+                <Icon name="download" size={12} />
+                {fmtNumber(p.downloads, lang)}
+              </span>
+            </span>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- RELEASES + POSTS -->
+  <section class="container-x pt-24">
+    <div class="grid gap-12 lg:grid-cols-[1fr_1.6fr]">
+      <div>
+        <p class="eyebrow">{L('版本', 'Releases')}</p>
+        <h2 class="h-section mt-3">{L('一个月，五个版本', 'Five releases in a month')}</h2>
+        <ol class="mt-8 space-y-0 border-l border-line">
+          {
+            history.map((h, i) => (
+              <li class="relative pb-6 pl-6">
+                <span class:list={['absolute top-1.5 -left-[5px] size-2.5 rounded-full', i === 0 ? 'bg-brand' : 'bg-line-strong']} />
+                <a href={h.url} target="_blank" rel="noopener" class="font-mono text-sm font-semibold hover:text-brand">
+                  {h.tag}
+                </a>
+                <div class="font-mono text-xs text-fg-mute">{fmtDate(h.publishedAt, lang)}</div>
+              </li>
+            ))
+          }
+          <li class="relative pl-6">
+            <span class="absolute top-1.5 -left-[5px] size-2.5 rounded-full border border-accent bg-bg" />
+            <span class="font-mono text-sm font-semibold text-accent">2.0</span>
+            <div class="font-mono text-xs text-fg-mute">{L('Vulkan / Metal GPU · 开发中', 'Vulkan / Metal GPU · in progress')}</div>
+          </li>
+        </ol>
+      </div>
+      <div>
+        <p class="eyebrow">{L('系列文章', 'The series')}</p>
+        <h2 class="h-section mt-3">{L('从 0 到 1.4 的开发手记', 'Dev diary, 0 → 1.4')}</h2>
+        <div class="mt-6 divide-y divide-line border-y border-line">
+          {seriesPosts.map((p) => <PostItem post={p} lang={lang} summary />)}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMMUNITY -->
+  <section class="container-x pt-24">
+    <div class="card flex flex-col items-start gap-8 p-8 sm:flex-row sm:items-center sm:p-10">
+      <img
+        src={ocrWechat.qr}
+        alt={L('计算机视觉微信群二维码', 'WeChat group QR code')}
+        width="132"
+        height="132"
+        loading="lazy"
+        referrerpolicy="no-referrer"
+        class="size-33 shrink-0 rounded-lg border border-line bg-white p-1.5"
+        onerror="this.style.display='none'"
+      />
+      <div>
+        <h2 class="text-2xl font-semibold tracking-tight">{L('C#/.NET 计算机视觉技术交流', 'C#/.NET Computer Vision community')}</h2>
+        <p class="mt-2 text-fg-soft">
+          {
+            L(
+              '扫码加入微信群；二维码每周更新，如已过期，请先加 QQ 群 579060605。',
+              'Scan to join the WeChat group. The QR code rotates weekly — if it has expired, join QQ group 579060605 instead.',
+            )
+          }
+        </p>
+        <div class="mt-5 flex flex-wrap gap-3">
+          <a href="https://qm.qq.com/q/bPw5jAK4qk" target="_blank" rel="noopener" class="btn-primary"><Icon name="users" /> QQ 579060605</a>
+          <a href={href(lang, '/community')} class="btn-ghost">{L('全部社区入口', 'All community channels')}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>

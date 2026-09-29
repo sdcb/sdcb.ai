@@ -1,0 +1,52 @@
+@utility container-x {
+  @apply mx-auto w-full max-w-6xl px-5 sm:px-8;
+}
+@utility grid-bg {
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+@utility eyebrow {
+  @apply font-mono text-xs tracking-wider text-brand uppercase;
+  &::before {
+    content: '// ';
+    color: var(--c-fg-mute);
+  }
+}
+@utility h-section {
+  @apply text-3xl font-semibold tracking-tight text-balance sm:text-4xl;
+}
+@utility lead {
+  @apply text-base leading-relaxed text-pretty text-fg-soft sm:text-lg;
+}
+@utility card {
+  @apply rounded-xl border border-line bg-surface transition-colors;
+  a&:hover {
+    border-color: var(--c-line-strong);
+  }
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all select-none;
+}
+@utility btn-primary {
+  @apply btn bg-fg text-bg hover:opacity-85;
+}
+@utility btn-brand {
+  @apply btn bg-brand text-white hover:brightness-110;
+}
+@utility btn-ghost {
+  @apply btn border border-line-strong text-fg hover:bg-surface-2;
+}
+@utility chip {
+  @apply inline-flex items-center gap-1.5 rounded-md border border-line bg-surface-2 px-2 py-0.5 font-mono text-[11px] text-fg-soft;
+}
+@utility link {
+  @apply text-brand underline decoration-brand/30 underline-offset-4 hover:decoration-brand;
+}
+@utility gradient-text {
+  background: linear-gradient(100deg, var(--c-brand) 10%, var(--c-accent) 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

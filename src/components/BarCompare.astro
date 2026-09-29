@@ -1,0 +1,49 @@
+---
+interface Props {
+  rows: { label: string; before: number; after: number }[];
+  unit: string;
+  beforeLabel: string;
+  afterLabel: string;
+}
+const { rows, unit, beforeLabel, afterLabel } = Astro.props;
+const max = Math.max(...rows.flatMap((r) => [r.before, r.after]));
+const pct = (v: number) => `${Math.max(2, (v / max) * 100).toFixed(1)}%`;
+---
+
+<div>
+  <div class="mb-4 flex gap-4 font-mono text-[11px] text-fg-mute">
+    <span class="inline-flex items-center gap-1.5"><span class="h-2 w-4 rounded-sm bg-fg-mute/35"></span>{beforeLabel}</span>
+    <span class="inline-flex items-center gap-1.5"><span class="h-2 w-4 rounded-sm bg-brand"></span>{afterLabel}</span>
+  </div>
+  <div class="grid gap-4">
+    {
+      rows.map((r) => {
+        const ratio = r.after / r.before;
+        return (
+          <div class="grid gap-1.5">
+            <div class="flex items-baseline justify-between font-mono text-xs">
+              <span class="text-fg-soft">{r.label}</span>
+              <span class:list={['tabular-nums', ratio < 0.97 ? 'text-ok' : 'text-fg-mute']}>{ratio.toFixed(2)}×</span>
+            </div>
+            <div class="grid gap-1">
+              <div class="flex items-center gap-2">
+                <div class="h-2 rounded-sm bg-fg-mute/35" style={`width:${pct(r.before)}`} />
+                <span class="font-mono text-[11px] text-fg-mute tabular-nums">
+                  {r.before}
+                  {unit}
+                </span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="h-2 rounded-sm bg-brand" style={`width:${pct(r.after)}`} />
+                <span class="font-mono text-[11px] text-fg tabular-nums">
+                  {r.after}
+                  {unit}
+                </span>
+              </div>
+            </div>
+          </div>
+        );
+      })
+    }
+  </div>
+</div>

@@ -1,0 +1,273 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { href, t, type Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const L = (zh: string, en: string) => t(lang, { zh, en });
+
+const i18n = {
+  downloading: L('正在下载 .NET 运行时与模型', 'Downloading .NET runtime and model'),
+  warming: L('正在初始化推理引擎', 'Initializing the inference engine'),
+  ready: L('就绪', 'Ready'),
+  running: L('识别中', 'Recognizing'),
+  failed: L('加载失败', 'Failed to load'),
+  noText: L('没有识别到文字', 'No text found'),
+  lines: L('行', 'lines'),
+  copied: L('已复制', 'Copied'),
+};
+---
+
+<Base
+  lang={lang}
+  title={L('SimdPaddleOCR 在线体验', 'SimdPaddleOCR Playground')}
+  description={L(
+    '在浏览器里直接运行纯 C# 的 SimdPaddleOCR：.NET WebAssembly 本地识别图片文字，图片不会上传到任何服务器。',
+    'Run pure-C# SimdPaddleOCR right in your browser via .NET WebAssembly. Your image never leaves your device.',
+  )}
+>
+  <section class="container-x pt-16 sm:pt-20">
+    <a href={href(lang, '/simdpaddleocr')} class="inline-flex items-center gap-1 font-mono text-xs text-fg-mute hover:text-fg">← SimdPaddleOCR</a>
+    <h1 class="mt-4 text-4xl font-bold tracking-tight sm:text-5xl">
+      Playground <span class="gradient-text">·</span> <span class="text-fg-mute">browser-wasm</span>
+    </h1>
+    <p class="lead mt-4 max-w-3xl">
+      {
+        L(
+          '同一套 C# 代码，编译成 WebAssembly 跑在你的浏览器里。图片不会离开你的电脑——没有服务器，没有 ONNX Runtime，也没有 OpenCV。',
+          'The very same C# code, compiled to WebAssembly and running in your browser. Your image never leaves your machine — no server, no ONNX Runtime, no OpenCV.',
+        )
+      }
+    </p>
+  </section>
+
+  <section class="container-x pt-10">
+    <div
+      id="pg"
+      class="grid gap-5 lg:grid-cols-[1.35fr_1fr]"
+      data-i18n={JSON.stringify(i18n)}
+    >
+      <!-- left: image -->
+      <div class="card overflow-hidden">
+        <div class="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
+          <label class="btn-ghost cursor-pointer px-3 py-1.5 text-xs">
+            <Icon name="image" size={14} /> {L('选择图片', 'Choose image')}
+            <input id="pg-file" type="file" accept="image/*" class="sr-only" />
+          </label>
+          <button id="pg-sample" type="button" class="btn-ghost px-3 py-1.5 text-xs">{L('示例图片', 'Sample image')}</button>
+          <span class="ml-auto hidden font-mono text-[11px] text-fg-mute sm:inline">{L('也可以拖拽或 Ctrl+V 粘贴', 'or drag & drop / paste')}</span>
+        </div>
+        <div id="pg-drop" class="relative grid min-h-[420px] place-items-center bg-bg-soft p-4 transition-colors data-[over]:bg-brand-soft">
+          <canvas id="pg-canvas" class="hidden max-h-[70vh] max-w-full rounded-md"></canvas>
+          <div id="pg-empty" class="text-center text-sm text-fg-mute">
+            <Icon name="image" size={36} class="mx-auto mb-3 opacity-50" />
+            {L('拖一张带文字的图片到这里', 'Drop an image with some text here')}
+          </div>
+          <div id="pg-busy" class="absolute inset-0 hidden place-items-center bg-bg/60 backdrop-blur-sm">
+            <div class="flex items-center gap-3 font-mono text-sm">
+              <span class="size-3 animate-ping rounded-full bg-brand"></span>
+              <span data-busy-label>{i18n.running}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- right: status + result -->
+      <div class="grid content-start gap-5">
+        <div class="card p-5 font-mono text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-fg-mute">runtime</span>
+            <span id="pg-state" class="inline-flex items-center gap-2 text-fg-soft">
+              <span class="size-2 rounded-full bg-warn" data-dot></span><span data-label>{i18n.downloading}</span>
+            </span>
+          </div>
+          <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-2">
+            <div id="pg-progress" class="h-full w-0 rounded-full bg-brand transition-[width] duration-300"></div>
+          </div>
+          <dl class="mt-4 grid grid-cols-2 gap-x-4 gap-y-2.5">
+            <dt class="text-fg-mute">{L('资源', 'assets')}</dt><dd id="pg-dl" class="text-right">–</dd>
+            <dt class="text-fg-mute">{L('启动 .NET', 'boot .NET')}</dt><dd id="pg-boot" class="text-right">–</dd>
+            <dt class="text-fg-mute">{L('模型加载', 'model load')}</dt><dd id="pg-load" class="text-right">–</dd>
+            <dt class="text-fg-mute">SIMD</dt><dd id="pg-simd" class="text-right">–</dd>
+            <dt class="text-fg-mute">{L('识别耗时', 'inference')}</dt><dd id="pg-ms" class="text-right text-base font-semibold text-brand">–</dd>
+          </dl>
+          <p id="pg-runtime" class="mt-4 truncate text-[10px] text-fg-mute"></p>
+        </div>
+
+        <div class="card flex min-h-[260px] flex-col">
+          <div class="flex items-center justify-between border-b border-line px-4 py-3">
+            <span class="text-sm font-medium">{L('识别结果', 'Result')} <span id="pg-count" class="ml-1 font-mono text-xs text-fg-mute"></span></span>
+            <button id="pg-copy" type="button" class="chip py-1 hover:text-fg" disabled>
+              <Icon name="copy" size={11} /> <span data-label>{L('复制全文', 'Copy text')}</span>
+            </button>
+          </div>
+          <ol id="pg-lines" class="max-h-[46vh] divide-y divide-line overflow-auto text-sm"></ol>
+        </div>
+
+        <p class="text-xs leading-relaxed text-fg-mute">
+          {
+            L(
+              '浏览器里是单线程 + 128 位 SIMD（WebAssembly SIMD），比桌面版 .NET 的 AVX2 / AVX-512 多线程慢不少——想看真实速度，请在本机用 NuGet 包跑一下。',
+              'The browser gets a single thread and 128-bit WebAssembly SIMD, so this is much slower than desktop .NET with AVX2 / AVX-512 and multiple threads. For real numbers, run the NuGet package locally.',
+            )
+          }
+        </p>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  type Line = { text: string; score: number; rotation: number; box: number[] };
+  type Result = { ms: number; detected: number; lines: Line[] };
+
+  const root = document.getElementById('pg')!;
+  const i18n = JSON.parse(root.dataset.i18n!) as Record<string, string>;
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+  const canvas = $<HTMLCanvasElement>('pg-canvas');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+  const state = $('pg-state');
+  const busy = $('pg-busy');
+  const linesEl = $('pg-lines');
+  const copyBtn = $<HTMLButtonElement>('pg-copy');
+  const MAX_SIDE = 1600;
+
+  let ready = false;
+  let pending: ImageData | null = null;
+  let seq = 0;
+  let lastText = '';
+  let bitmap: ImageBitmap | null = null;
+
+  function setState(label: string, color: string) {
+    state.querySelector<HTMLElement>('[data-label]')!.textContent = label;
+    state.querySelector<HTMLElement>('[data-dot]')!.className = `size-2 rounded-full ${color}`;
+  }
+  const fmtMs = (ms: number) => (ms >= 1000 ? `${(ms / 1000).toFixed(2)} s` : `${ms.toFixed(0)} ms`);
+
+  const worker = new Worker('/ocr/worker.js', { type: 'module' });
+  worker.onmessage = (e) => {
+    const m = e.data;
+    if (m.type === 'progress') {
+      $('pg-progress').style.width = `${Math.min(100, (m.loaded / Math.max(1, m.total)) * 100)}%`;
+      $('pg-dl').textContent = `${m.loaded}/${m.total}`;
+      if (m.loaded === m.total) setState(i18n.warming, 'bg-warn');
+    } else if (m.type === 'ready') {
+      ready = true;
+      setState(i18n.ready, 'bg-ok');
+      $('pg-progress').style.width = '100%';
+      $('pg-dl').textContent = '✓';
+      $('pg-boot').textContent = fmtMs(m.info.bootMs);
+      $('pg-load').textContent = fmtMs(m.info.loadMs);
+      $('pg-simd').textContent = m.info.simd ? `✓ ${m.info.vectorBits}-bit` : '✗';
+      $('pg-runtime').textContent = m.info.runtime;
+      if (pending) run(pending);
+    } else if (m.type === 'result') {
+      if (m.id !== seq) return;
+      busy.classList.replace('grid', 'hidden');
+      render(m.result as Result);
+    } else if (m.type === 'fatal' || m.type === 'error') {
+      busy.classList.replace('grid', 'hidden');
+      setState(`${i18n.failed}: ${m.message}`, 'bg-red-500');
+      console.error(m.message);
+    }
+  };
+
+  async function load(blob: Blob) {
+    bitmap?.close();
+    bitmap = await createImageBitmap(blob);
+    const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    draw();
+    canvas.classList.remove('hidden');
+    $('pg-empty').classList.add('hidden');
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    if (ready) run(data);
+    else {
+      pending = data;
+      busy.classList.replace('hidden', 'grid');
+      busy.querySelector('[data-busy-label]')!.textContent = i18n.downloading;
+    }
+  }
+
+  function draw() {
+    if (bitmap) ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  }
+
+  function run(data: ImageData) {
+    pending = null;
+    busy.classList.replace('hidden', 'grid');
+    busy.querySelector('[data-busy-label]')!.textContent = i18n.running;
+    const rgba = new Uint8Array(data.data.buffer.slice(0));
+    worker.postMessage({ id: ++seq, rgba, width: data.width, height: data.height }, [rgba.buffer]);
+  }
+
+  function render(r: Result) {
+    draw();
+    const brand = getComputedStyle(document.documentElement).getPropertyValue('--c-brand').trim() || '#8f7bff';
+    ctx.lineWidth = Math.max(1.5, canvas.width / 400);
+    ctx.strokeStyle = brand;
+    ctx.fillStyle = brand + '22';
+    for (const l of r.lines) {
+      const b = l.box;
+      ctx.beginPath();
+      ctx.moveTo(b[0], b[1]);
+      for (let i = 2; i < 8; i += 2) ctx.lineTo(b[i], b[i + 1]);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+    $('pg-ms').textContent = fmtMs(r.ms);
+    $('pg-count').textContent = `${r.lines.length} ${i18n.lines}`;
+    linesEl.replaceChildren(
+      ...(r.lines.length
+        ? r.lines.map((l, i) => {
+            const li = document.createElement('li');
+            li.className = 'flex items-baseline gap-3 px-4 py-2.5';
+            li.innerHTML = `<span class="w-5 shrink-0 font-mono text-[11px] text-fg-mute">${i + 1}</span><span class="min-w-0 flex-1 break-words"></span><span class="shrink-0 font-mono text-[11px] text-accent">${l.rotation ? '↻ ' + l.rotation + '°' : ''}</span>`;
+            li.children[1].textContent = l.text;
+            return li;
+          })
+        : [Object.assign(document.createElement('li'), { className: 'px-4 py-6 text-center text-fg-mute', textContent: i18n.noText })]),
+    );
+    lastText = r.lines.map((l) => l.text).join('\n');
+    copyBtn.disabled = !lastText;
+  }
+
+  copyBtn.addEventListener('click', async () => {
+    await navigator.clipboard.writeText(lastText);
+    const label = copyBtn.querySelector('[data-label]')!;
+    const prev = label.textContent;
+    label.textContent = i18n.copied;
+    setTimeout(() => (label.textContent = prev), 1500);
+  });
+
+  $<HTMLInputElement>('pg-file').addEventListener('change', (e) => {
+    const f = (e.target as HTMLInputElement).files?.[0];
+    if (f) load(f);
+  });
+  $('pg-sample').addEventListener('click', async () => load(await (await fetch('/ocr/sample.jpg')).blob()));
+  const drop = $('pg-drop');
+  drop.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    drop.dataset.over = '';
+  });
+  drop.addEventListener('dragleave', () => delete drop.dataset.over);
+  drop.addEventListener('drop', (e) => {
+    e.preventDefault();
+    delete drop.dataset.over;
+    const f = e.dataTransfer?.files?.[0];
+    if (f?.type.startsWith('image/')) load(f);
+  });
+  window.addEventListener('paste', (e) => {
+    const f = [...(e.clipboardData?.files ?? [])].find((x) => x.type.startsWith('image/'));
+    if (f) load(f);
+  });
+
+  fetch('/ocr/sample.jpg')
+    .then((r) => r.blob())
+    .then(load);
+</script>

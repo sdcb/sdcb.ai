@@ -1,0 +1,30 @@
+---
+import { fmtNumber, t, type Lang, type L10n } from '../i18n';
+import { totals } from '../data/snapshot';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
+const items: { key: keyof typeof totals; label: L10n; href: string }[] = [
+  { key: 'stars', label: { zh: 'GitHub Stars', en: 'GitHub stars' }, href: 'https://github.com/sdcb' },
+  { key: 'nugetDownloads', label: { zh: 'NuGet 下载', en: 'NuGet downloads' }, href: 'https://www.nuget.org/profiles/sdflysha' },
+  { key: 'dockerPulls', label: { zh: 'Docker 拉取', en: 'Docker pulls' }, href: 'https://hub.docker.com/u/sdcb' },
+  { key: 'blogViews', label: { zh: '博客阅读', en: 'Blog reads' }, href: 'https://www.cnblogs.com/sdcb' },
+  { key: 'nugetPackages', label: { zh: 'NuGet 包', en: 'NuGet packages' }, href: 'https://www.nuget.org/profiles/sdflysha' },
+];
+---
+
+<dl class="grid grid-cols-2 overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3 lg:grid-cols-5 [&>*]:bg-surface gap-px">
+  {
+    items.map((i) => (
+      <a href={i.href} target="_blank" rel="noopener" class="group flex flex-col gap-1 px-5 py-5 transition-colors hover:bg-surface-2">
+        <dt class="order-2 text-xs text-fg-mute group-hover:text-fg-soft">{t(lang, i.label)}</dt>
+        <dd class="order-1 font-mono text-2xl font-semibold tracking-tight tabular-nums sm:text-[1.7rem]" data-stat={i.key}>
+          {fmtNumber(totals[i.key], lang)}
+        </dd>
+      </a>
+    ))
+  }
+</dl>

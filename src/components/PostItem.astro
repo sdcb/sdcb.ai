@@ -1,0 +1,24 @@
+---
+import Icon from './Icon.astro';
+import { fmtDate, fmtNumber, type Lang } from '../i18n';
+import type { PostWithSeries } from '../data/writing';
+
+interface Props {
+  post: PostWithSeries;
+  lang: Lang;
+  summary?: boolean;
+}
+const { post, lang, summary = false } = Astro.props;
+---
+
+<a href={post.url} target="_blank" rel="noopener" lang="zh-CN" class="group grid gap-1.5 py-4 sm:grid-cols-[7.5rem_1fr] sm:gap-6">
+  <time datetime={post.date} class="font-mono text-xs text-fg-mute sm:pt-1">{fmtDate(post.date, lang)}</time>
+  <div class="min-w-0">
+    <h3 class="font-medium text-pretty text-fg transition-colors group-hover:text-brand">{post.title}</h3>
+    {summary && post.summary && <p class="mt-1.5 line-clamp-2 text-sm leading-relaxed text-fg-mute">{post.summary}</p>}
+    <div class="mt-1.5 flex gap-4 font-mono text-[11px] text-fg-mute">
+      <span class="inline-flex items-center gap-1"><Icon name="eye" size={11} />{fmtNumber(post.views, lang)}</span>
+      {post.diggs > 0 && <span class="inline-flex items-center gap-1"><Icon name="thumbsUp" size={11} />{post.diggs}</span>}
+    </div>
+  </div>
+</a>

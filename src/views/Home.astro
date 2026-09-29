@@ -1,0 +1,359 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import CodeWindow from '../components/CodeWindow.astro';
+import SimdLanes from '../components/SimdLanes.astro';
+import StatBar from '../components/StatBar.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import PostItem from '../components/PostItem.astro';
+import { href, t, fmtNumber, type Lang } from '../i18n';
+import { site } from '../data/site';
+import { projects } from '../data/projects';
+import { posts, series } from '../data/writing';
+import { release, repo, nugetDownloads, dockerPulls } from '../data/snapshot';
+import { qqGroups } from '../data/community';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const L = (zh: string, en: string) => t(lang, { zh, en });
+
+const ocrRelease = release('SimdPaddleOCR');
+const chatsRelease = release('chats');
+const featured = ['PaddleSharp', 'OpenVINO.NET', 'Sdcb.FFmpeg', 'Sdcb.Arithmetic', 'csharp-runner', 'sdmap'].map(
+  (name) => projects.find((p) => p.repo === name)!,
+);
+const latestPosts = posts.slice(0, 6);
+
+const kernel = `
+// Sdcb.SimdPaddleOCR —— GEMM 微内核（示意）
+static unsafe void Kernel8x8(float* a, float* b, float* c, int k)
+{
+    Vector256<float> c0 = default, c1 = default; // … c7
+    for (int p = 0; p < k; p++, a += 8, b += 8)
+    {
+        var bv = Avx.LoadVector256(b);
+        c0 = Fma.MultiplyAdd(Vector256.Create(a[0]), bv, c0);
+        c1 = Fma.MultiplyAdd(Vector256.Create(a[1]), bv, c1);
+        // … c2 ~ c7
+    }
+    Avx.Store(c, c0);
+    Avx.Store(c + 8, c1); // …
+}`.replace('GEMM 微内核（示意）', L('GEMM 微内核（示意）', 'GEMM micro-kernel (illustrative)'));
+
+const evolution = [
+  {
+    year: '2021',
+    name: 'PaddleSharp',
+    repo: 'PaddleSharp',
+    how: L('绑定 Paddle Inference 原生库', 'Binds the native Paddle Inference runtime'),
+    deps: ['paddle_inference.dll', 'mkldnn', 'OpenCvSharp'],
+    downloads: nugetDownloads(projects.find((p) => p.repo === 'PaddleSharp')!.nuget!),
+  },
+  {
+    year: '2023',
+    name: 'OpenVINO.NET',
+    repo: 'OpenVINO.NET',
+    how: L('绑定 Intel OpenVINO™ 原生运行时', 'Binds the native Intel OpenVINO™ runtime'),
+    deps: ['openvino.dll', 'tbb', 'OpenCvSharp'],
+    downloads: nugetDownloads(['Sdcb.OpenVINO']),
+  },
+  {
+    year: '2026',
+    name: 'SimdPaddleOCR',
+    repo: 'SimdPaddleOCR',
+    how: L('推理引擎本身就是 C#', 'The inference engine itself is C#'),
+    deps: [],
+    downloads: nugetDownloads(['Sdcb.SimdPaddleOCR']),
+  },
+];
+---
+
+<Base lang={lang}>
+  <!-- HERO -->
+  <section class="relative overflow-hidden">
+    <div class="grid-bg pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_75%)]"></div>
+    <div class="pointer-events-none absolute -top-40 left-1/2 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-brand/15 blur-[120px]"></div>
+
+    <div class="container-x relative grid items-center gap-12 pt-16 pb-16 sm:pt-24 lg:grid-cols-[1fr_1.12fr] lg:gap-10 lg:pb-24">
+      <div>
+        <a href={site.mvpProfile} target="_blank" rel="noopener" class="chip border-brand/30 bg-brand-soft py-1 text-brand hover:border-brand/60">
+          <Icon name="award" size={13} /> Microsoft MVP · C# / .NET
+        </a>
+
+        <h1 class="mt-7 font-mono text-[2.6rem] leading-[1.08] font-bold tracking-tight sm:text-6xl">
+          <span class="block"><span class="text-brand">S</span><span class="text-fg-mute">erving</span></span>
+          <span class="block"><span class="text-brand">d</span><span class="text-fg-mute">otNET,</span></span>
+          <span class="block"><span class="text-brand">c</span><span class="text-fg-mute">onstructing</span></span>
+          <span class="block"><span class="text-brand">b</span><span class="gradient-text">rilliance.</span></span>
+        </h1>
+
+        <p class="lead mt-7 max-w-xl">
+          {
+            lang === 'zh' ? (
+              <>
+                我是 <strong class="text-fg">ZHOU Jie（周杰）</strong>，微软 MVP，《.NET骚操作》作者。十多年来我用 C# 把 OCR、大模型、音视频和高性能计算带进
+                .NET——如今，连<strong class="text-fg">推理引擎本身</strong>也是纯 C# 写的。
+              </>
+            ) : (
+              <>
+                I'm <strong class="text-fg">ZHOU Jie</strong>, a Microsoft MVP and author of the “.NET骚操作” blog. For over a decade I've been bringing OCR,
+                LLMs, media and high-performance computing to .NET — and now even the <strong class="text-fg">inference engine itself</strong> is pure C#.
+              </>
+            )
+          }
+        </p>
+
+        <div class="mt-9 flex flex-wrap gap-3">
+          <a href={href(lang, '/simdpaddleocr')} class="btn-brand">
+            {L('认识 SimdPaddleOCR', 'Meet SimdPaddleOCR')}
+            <Icon name="arrowRight" />
+          </a>
+          <a href={href(lang, '/projects')} class="btn-ghost">{L('浏览开源项目', 'Browse projects')}</a>
+          <a href={site.links.github} target="_blank" rel="noopener" class="btn-ghost"><Icon name="github" /> GitHub</a>
+        </div>
+      </div>
+
+      <div class="relative grid gap-3" data-reveal>
+        <CodeWindow code={kernel} title="Kernel8x8.cs" uiLang={lang} copy={false} />
+        <SimdLanes lang={lang} />
+      </div>
+    </div>
+
+    <div class="container-x relative pb-8">
+      <StatBar lang={lang} />
+    </div>
+  </section>
+
+  <!-- NOW -->
+  <section class="container-x pt-24">
+    <p class="eyebrow">{L('最近在忙', 'Now')}</p>
+    <h2 class="h-section mt-3">{L('正在进行的两件大事', 'Two big things in flight')}</h2>
+
+    <div class="mt-10 grid gap-5 lg:grid-cols-[1.35fr_1fr]">
+      <article class="card relative overflow-hidden p-7 sm:p-9" data-reveal>
+        <div class="pointer-events-none absolute -top-24 -right-24 size-72 rounded-full bg-brand/20 blur-3xl"></div>
+        <div class="relative">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="chip border-brand/40 text-brand">feature/2.0</span>
+            {ocrRelease && <span class="chip">latest {ocrRelease.tag}</span>}
+            <span class="chip"><Icon name="star" size={11} /> <span data-repo-stars="SimdPaddleOCR">{fmtNumber(repo('SimdPaddleOCR')?.stars ?? 0, 'en')}</span></span>
+          </div>
+          <h3 class="mt-5 font-mono text-3xl font-bold tracking-tight">SimdPaddleOCR 2.0</h3>
+          <p class="mt-3 max-w-lg text-fg-soft">
+            {
+              L(
+                '给 PaddleSharp 与 OpenVINO.NET 在 AI 时代的一次彻底焕新：不依赖 Paddle Inference、ONNX Runtime 或 OpenCV，所有算子都是 C# 手写的。2.0 在 CPU SIMD 之外，新增 Vulkan 与 Metal GPU 后端。',
+                'A ground-up reinvention of PaddleSharp and OpenVINO.NET for the AI era: no Paddle Inference, no ONNX Runtime, no OpenCV — every operator is hand-written C#. 2.0 adds Vulkan and Metal GPU backends on top of CPU SIMD.',
+              )
+            }
+          </p>
+          <ul class="mt-6 grid gap-2.5 text-sm sm:grid-cols-2">
+            {
+              [
+                [L('零原生依赖，一个 NuGet 包搞定', 'Zero native deps — one NuGet package'), 'box'],
+                [L('AVX2 / AVX-512 / VNNI / NEON 手写内核', 'Hand-tuned AVX2 / AVX-512 / VNNI / NEON'), 'cpu'],
+                [L('Vulkan / Metal GPU（2.0）', 'Vulkan / Metal GPU (2.0)'), 'zap'],
+                [L('NativeAOT · .NET Framework 4.8 · Android', 'NativeAOT · .NET Framework 4.8 · Android'), 'layers'],
+              ].map(([text, icon]) => (
+                <li class="flex items-center gap-2.5 text-fg-soft">
+                  <span class="grid size-7 place-items-center rounded-md bg-brand-soft text-brand">
+                    <Icon name={icon as any} size={14} />
+                  </span>
+                  {text}
+                </li>
+              ))
+            }
+          </ul>
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a href={href(lang, '/simdpaddleocr')} class="btn-primary">{L('深入了解', 'Learn more')} <Icon name="arrowRight" /></a>
+            <a href={href(lang, '/simdpaddleocr/playground')} class="btn-ghost"><Icon name="sparkles" /> {L('在浏览器里试试', 'Try it in your browser')}</a>
+          </div>
+        </div>
+      </article>
+
+      <div class="grid gap-5">
+        <article class="card flex flex-col p-7" data-reveal style="--delay:80ms">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="chip border-warn/40 text-warn">{L('2.0 筹划中', '2.0 in planning')}</span>
+            {chatsRelease && <span class="chip">latest {chatsRelease.name}</span>}
+          </div>
+          <h3 class="mt-4 font-mono text-2xl font-bold tracking-tight">Sdcb Chats</h3>
+          <p class="mt-2 text-sm leading-relaxed text-fg-soft">
+            {
+              L(
+                '大模型前端与 AI 网关：22+ 模型服务商、代码解释器、Request Trace，兼容 Claude Code。1.x 已迭代到 1.17，2.0 正在酝酿。',
+                'LLM front-end and AI gateway: 22+ providers, code interpreter, request tracing, works with Claude Code. 1.x has reached 1.17 — 2.0 is brewing.',
+              )
+            }
+          </p>
+          <div class="mt-4 flex gap-5 font-mono text-xs text-fg-mute">
+            <span><b class="text-base text-fg">{fmtNumber(dockerPulls(['chats']), lang)}</b> {L('次 Docker 拉取', 'Docker pulls')}</span>
+            <span><b class="text-base text-fg" data-repo-stars="chats">{fmtNumber(repo('chats')?.stars ?? 0, 'en')}</b> Stars</span>
+          </div>
+          <a href={href(lang, '/chats')} class="link mt-5 inline-flex items-center gap-1 text-sm">{L('了解 Chats', 'About Chats')} <Icon name="arrowRight" size={14} /></a>
+        </article>
+
+        <a href="https://github.com/sdcb/HyMT2Sharp" target="_blank" rel="noopener" class="card group p-6" data-reveal style="--delay:160ms">
+          <div class="flex items-center justify-between">
+            <span class="chip">{L('新发布', 'New')}</span>
+            <Icon name="arrowUpRight" class="text-fg-mute group-hover:text-fg" />
+          </div>
+          <h3 class="mt-3 font-mono text-lg font-semibold">HyMT2Sharp</h3>
+          <p class="mt-1.5 text-sm text-fg-soft">
+            {L('纯 C# 的腾讯混元翻译大模型推理：不依赖 llama.cpp，本地离线翻译。', 'Pure-C# inference for Tencent Hunyuan MT2 — no llama.cpp, offline translation.')}
+          </p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- EVOLUTION -->
+  <section class="container-x pt-28">
+    <p class="eyebrow">{L('演进', 'Evolution')}</p>
+    <h2 class="h-section mt-3 max-w-2xl">{L('从“绑定原生库”，到“用 C# 重写推理引擎”', 'From binding native runtimes to rewriting the engine in C#')}</h2>
+    <p class="lead mt-4 max-w-2xl">
+      {
+        L(
+          '五年时间，同一个问题的三种答案：怎样让 .NET 开发者用上最好的 OCR？',
+          'Five years, three answers to the same question: how do .NET developers get the best OCR?',
+        )
+      }
+    </p>
+
+    <ol class="relative mt-12 grid gap-5 md:grid-cols-3">
+      {
+        evolution.map((e, i) => (
+          <li
+            class:list={['card relative p-6', i === 2 && 'border-brand/40 bg-gradient-to-b from-brand-soft to-surface']}
+            data-reveal
+            style={`--delay:${i * 90}ms`}
+          >
+            <div class="flex items-center justify-between font-mono text-xs text-fg-mute">
+              <span>{e.year}</span>
+              <span>
+                {fmtNumber(e.downloads, lang)} {L('次下载', 'downloads')}
+              </span>
+            </div>
+            <h3 class="mt-4 font-mono text-xl font-semibold">{e.name}</h3>
+            <p class="mt-1 text-sm text-fg-soft">{e.how}</p>
+            <div class="mt-5 flex min-h-7 flex-wrap gap-1.5">
+              {e.deps.length ? (
+                e.deps.map((d) => <span class="chip">{d}</span>)
+              ) : (
+                <span class="chip border-ok/40 text-ok">
+                  <Icon name="check" size={11} /> {L('零原生依赖', 'zero native deps')}
+                </span>
+              )}
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <!-- PROJECTS -->
+  <section class="container-x pt-28">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <p class="eyebrow">{L('开源', 'Open source')}</p>
+        <h2 class="h-section mt-3">{L('被大量使用的开源项目', 'Libraries people actually ship')}</h2>
+      </div>
+      <a href={href(lang, '/projects')} class="link inline-flex items-center gap-1 text-sm">{L('全部项目', 'All projects')} <Icon name="arrowRight" size={14} /></a>
+    </div>
+    <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {featured.map((p) => <ProjectCard project={p} lang={lang} />)}
+    </div>
+  </section>
+
+  <!-- WRITING -->
+  <section class="container-x pt-28">
+    <div class="grid gap-10 lg:grid-cols-[1fr_1.6fr]">
+      <div>
+        <p class="eyebrow">{L('写作', 'Writing')}</p>
+        <h2 class="h-section mt-3">.NET骚操作</h2>
+        <p class="lead mt-4">
+          {
+            L(
+              `在博客园与微信公众号持续写作，${posts.length} 篇文章，从 2013 年的 Direct2D 一路写到 2026 年的手写 SIMD。`,
+              `${posts.length} posts on cnblogs and WeChat, from Direct2D in 2013 to hand-written SIMD in 2026. (Written in Chinese.)`,
+            )
+          }
+        </p>
+        <div class="mt-6 flex flex-wrap gap-2">
+          {
+            series.slice(0, 5).map((s) => (
+              <a href={href(lang, '/writing') + '#' + s.id} class="chip py-1 hover:border-line-strong hover:text-fg">
+                {t(lang, s.name)}
+              </a>
+            ))
+          }
+        </div>
+        <div class="mt-8 flex gap-3">
+          <a href={href(lang, '/writing')} class="btn-ghost">{L('全部文章', 'All posts')}</a>
+          <a href={site.links.blog} target="_blank" rel="noopener" class="btn-ghost"><Icon name="book" /> {L('博客园', 'cnblogs')}</a>
+        </div>
+      </div>
+      <div class="divide-y divide-line border-y border-line">
+        {latestPosts.map((p) => <PostItem post={p} lang={lang} />)}
+      </div>
+    </div>
+  </section>
+
+  <!-- COMMUNITY -->
+  <section class="container-x pt-28">
+    <div class="card relative overflow-hidden p-8 sm:p-12">
+      <div class="grid-bg pointer-events-none absolute inset-0 opacity-60"></div>
+      <div class="relative grid items-center gap-8 lg:grid-cols-[1.2fr_1fr]">
+        <div>
+          <p class="eyebrow">{L('社区', 'Community')}</p>
+          <h2 class="h-section mt-3">{L('来群里一起骚操作', 'Come hang out')}</h2>
+          <p class="lead mt-4">
+            {
+              L(
+                '三个 QQ 群、多个微信群和一个公众号。遇到问题、想交流想法，或者只是想看看别人用 .NET 做了什么，都欢迎。',
+                'Three QQ groups, several WeChat groups and an official account — mostly Chinese-speaking. Questions, ideas, or just lurking — all welcome.',
+              )
+            }
+          </p>
+          <a href={href(lang, '/community')} class="btn-primary mt-7">{L('加入社区', 'Join the community')} <Icon name="arrowRight" /></a>
+        </div>
+        <ul class="grid gap-2.5">
+          {
+            qqGroups.map((g) => (
+              <li class="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3">
+                <span class="min-w-0">
+                  <span class="block truncate text-sm font-medium">{t(lang, g.name)}</span>
+                  <span class="font-mono text-xs text-fg-mute">QQ {g.id}</span>
+                </span>
+                <button type="button" data-copy={g.id} class="chip shrink-0 py-1 hover:text-fg">
+                  <Icon name="copy" size={11} />
+                  <span data-copy-label>{L('复制群号', 'Copy')}</span>
+                </button>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT MINI -->
+  <section class="container-x pt-28">
+    <div class="flex flex-col items-start gap-8 sm:flex-row sm:items-center">
+      <img src={site.avatar} alt="ZHOU Jie" width="96" height="96" class="size-24 rounded-2xl border border-line" loading="lazy" decoding="async" />
+      <div class="max-w-2xl">
+        <p class="text-lg leading-relaxed text-fg-soft">
+          {
+            L(
+              '从 2013 年写 Direct2D 的 C++ 程序员，到今天手写 SIMD 推理内核的 .NET 开发者。我相信 C# 能做的事远比大多数人以为的多——这个网站上的每一个项目，都是在证明这一点。',
+              'From a C++ programmer writing Direct2D in 2013 to a .NET developer hand-writing SIMD inference kernels today. I believe C# can do far more than most people think — every project on this site is an attempt to prove it.',
+            )
+          }
+        </p>
+        <a href={href(lang, '/about')} class="link mt-3 inline-flex items-center gap-1 text-sm">{L('关于我', 'About me')} <Icon name="arrowRight" size={14} /></a>
+      </div>
+    </div>
+  </section>
+</Base>

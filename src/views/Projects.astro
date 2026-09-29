@@ -1,0 +1,93 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import StatBar from '../components/StatBar.astro';
+import { t, fmtNumber, fmtDate, type Lang } from '../i18n';
+import { categories, projects } from '../data/projects';
+import { snapshot } from '../data/snapshot';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const L = (zh: string, en: string) => t(lang, { zh, en });
+
+const curated = new Set(projects.map((p) => p.repo.toLowerCase()));
+const hidden = new Set(['sdcb', 'sdcb.ai', 'blogs']);
+const others = snapshot.github.repos.filter((r) => !curated.has(r.name.toLowerCase()) && !hidden.has(r.name.toLowerCase()) && r.stars >= 2);
+---
+
+<Base
+  lang={lang}
+  title={L('开源项目', 'Projects')}
+  description={L('ZHOU Jie（sdcb）的全部开源项目：AI 推理引擎、AI 网关、大模型 SDK、多媒体、数值计算与开发者工具。', 'All open-source projects by ZHOU Jie (sdcb): AI inference, AI gateways, LLM SDKs, media, numerics and developer tools.')}
+>
+  <section class="container-x pt-20 sm:pt-24">
+    <p class="eyebrow">{L('开源', 'Open source')}</p>
+    <h1 class="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">{L('开源项目', 'Projects')}</h1>
+    <p class="lead mt-5 max-w-2xl">
+      {
+        L(
+          `GitHub 上 ${snapshot.github.repos.length} 个原创仓库、NuGet 上 ${snapshot.nuget.packageCount} 个包。下面是按领域整理的精选，数字每天自动更新。`,
+          `${snapshot.github.repos.length} original repositories on GitHub and ${snapshot.nuget.packageCount} packages on NuGet. Curated by area below — numbers refresh daily.`,
+        )
+      }
+    </p>
+    <nav class="mt-8 flex flex-wrap gap-2" aria-label={L('分类', 'Categories')}>
+      {
+        categories.map((c) => (
+          <a href={`#${c.id}`} class="chip py-1.5 text-xs hover:border-line-strong hover:text-fg">
+            {t(lang, c.label)}
+            <span class="text-fg-mute">{projects.filter((p) => p.category === c.id).length}</span>
+          </a>
+        ))
+      }
+      <a href="#more" class="chip py-1.5 text-xs hover:border-line-strong hover:text-fg">{L('更多仓库', 'More repos')} <span class="text-fg-mute">{others.length}</span></a>
+    </nav>
+    <div class="mt-10"><StatBar lang={lang} /></div>
+  </section>
+
+  {
+    categories.map((c) => {
+      const list = projects.filter((p) => p.category === c.id);
+      return (
+        <section id={c.id} class="container-x scroll-mt-24 pt-20">
+          <div class="flex flex-wrap items-baseline justify-between gap-2 border-b border-line pb-4">
+            <h2 class="text-2xl font-semibold tracking-tight">{t(lang, c.label)}</h2>
+            <p class="text-sm text-fg-mute">{t(lang, c.blurb)}</p>
+          </div>
+          <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {list.map((p) => (
+              <ProjectCard project={p} lang={lang} size={p.featured ? 'lg' : 'md'} />
+            ))}
+          </div>
+        </section>
+      );
+    })
+  }
+
+  <section id="more" class="container-x scroll-mt-24 pt-20">
+    <div class="flex flex-wrap items-baseline justify-between gap-2 border-b border-line pb-4">
+      <h2 class="text-2xl font-semibold tracking-tight">{L('更多仓库', 'More repositories')}</h2>
+      <a href="https://github.com/sdcb?tab=repositories" target="_blank" rel="noopener" class="link inline-flex items-center gap-1 text-sm">GitHub <Icon name="arrowUpRight" size={13} /></a>
+    </div>
+    <ul class="divide-y divide-line">
+      {
+        others.map((r) => (
+          <li>
+            <a href={r.url} target="_blank" rel="noopener" class="group grid gap-1 py-3.5 sm:grid-cols-[14rem_1fr_auto] sm:items-center sm:gap-6">
+              <span class="font-mono text-sm font-medium group-hover:text-brand">{r.name}</span>
+              <span class="truncate text-sm text-fg-mute">{r.description}</span>
+              <span class="flex gap-4 font-mono text-xs text-fg-mute">
+                {r.language && <span>{r.language}</span>}
+                <span class="inline-flex items-center gap-1"><Icon name="star" size={11} />{fmtNumber(r.stars, 'en')}</span>
+                <span class="hidden w-20 text-right md:inline">{fmtDate(r.pushedAt, lang, false)}</span>
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</Base>

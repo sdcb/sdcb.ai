@@ -1,0 +1,119 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import PostItem from '../components/PostItem.astro';
+import { t, fmtNumber, type Lang } from '../i18n';
+import { posts, series, otherSeries } from '../data/writing';
+import { snapshot } from '../data/snapshot';
+import { site } from '../data/site';
+import { officialAccount } from '../data/community';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const L = (zh: string, en: string) => t(lang, { zh, en });
+
+const allSeries = [...series, otherSeries].map((s) => ({ ...s, posts: posts.filter((p) => p.series === s.id) })).filter((s) => s.posts.length);
+const popular = [...posts].sort((a, b) => b.views - a.views).slice(0, 5);
+const years = new Set(posts.map((p) => p.date.slice(0, 4)));
+---
+
+<Base
+  lang={lang}
+  title={L('文章', 'Writing')}
+  description={L('《.NET骚操作》：ZHOU Jie 在博客园与微信公众号上的技术文章，按系列整理。', '“.NET骚操作”: technical writing by ZHOU Jie on cnblogs and WeChat, organized by series (in Chinese).')}
+>
+  <section class="container-x pt-20 sm:pt-24">
+    <div class="grid gap-10 lg:grid-cols-[1.4fr_1fr]">
+      <div>
+        <p class="eyebrow">{L('写作', 'Writing')}</p>
+        <h1 class="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">.NET骚操作</h1>
+        <p class="lead mt-5 max-w-2xl">
+          {
+            L(
+              '把 .NET 用在“不像 .NET 能做”的地方，然后把过程写清楚。文章首发于博客园，同步到微信公众号。',
+              'Using .NET where people don’t expect it — and writing up how. Posts go out on cnblogs first, then the WeChat account.',
+            )
+          }
+        </p>
+        {
+          lang === 'en' && (
+            <p class="mt-4 inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-sm text-fg-soft">
+              <Icon name="languages" /> All posts are written in Chinese; your browser’s translate feature works well on cnblogs.
+            </p>
+          )
+        }
+        <dl class="mt-8 flex flex-wrap gap-x-10 gap-y-4 font-mono">
+          <div><dt class="text-xs text-fg-mute">{L('文章', 'posts')}</dt><dd class="text-2xl font-semibold">{posts.length}</dd></div>
+          <div><dt class="text-xs text-fg-mute">{L('总阅读', 'reads')}</dt><dd class="text-2xl font-semibold">{fmtNumber(snapshot.blog.totalViews, lang)}</dd></div>
+          <div><dt class="text-xs text-fg-mute">{L('跨度', 'span')}</dt><dd class="text-2xl font-semibold">{Math.min(...[...years].map(Number))}–{Math.max(...[...years].map(Number))}</dd></div>
+        </dl>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href={site.links.blog} target="_blank" rel="noopener" class="btn-primary"><Icon name="book" /> {L('博客园', 'cnblogs')}</a>
+          <a href={site.links.blogRss} target="_blank" rel="noopener" class="btn-ghost"><Icon name="rss" /> RSS</a>
+          <a href="https://github.com/sdcb/blog-data" target="_blank" rel="noopener" class="btn-ghost"><Icon name="github" /> {L('示例代码', 'Sample code')}</a>
+        </div>
+      </div>
+      <div id="mp" class="card flex items-center gap-5 self-start p-6">
+        <img src={officialAccount.qr} alt={L('微信公众号 .NET骚操作 二维码', 'WeChat Official Account QR code')} width="120" height="120" loading="lazy" referrerpolicy="no-referrer" class="size-30 shrink-0 rounded-lg bg-white p-1" />
+        <div>
+          <h2 class="font-semibold">{L('微信公众号', 'WeChat Official Account')}</h2>
+          <p class="mt-1 font-mono text-sm text-brand">{officialAccount.name}</p>
+          <p class="mt-2 text-sm text-fg-mute">{L('内容与博客园同步，微信扫码关注。', 'Same posts as the blog. Scan with WeChat to follow.')}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="container-x pt-16">
+    <h2 class="font-mono text-xs tracking-wider text-fg-mute uppercase">{L('最受欢迎', 'Most read')}</h2>
+    <ol class="mt-4 grid gap-3 md:grid-cols-5">
+      {
+        popular.map((p, i) => (
+          <li>
+            <a href={p.url} target="_blank" rel="noopener" lang="zh-CN" class="card flex h-full flex-col gap-3 p-4 hover:bg-surface-2/60">
+              <span class="font-mono text-2xl font-bold text-brand/70">0{i + 1}</span>
+              <span class="text-sm leading-snug font-medium">{p.title}</span>
+              <span class="mt-auto inline-flex items-center gap-1 font-mono text-[11px] text-fg-mute"><Icon name="eye" size={11} />{fmtNumber(p.views, lang)}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <div class="container-x grid gap-10 pt-16 lg:grid-cols-[14rem_1fr]">
+    <nav class="hidden lg:block" aria-label={L('系列', 'Series')}>
+      <ul class="sticky top-24 space-y-1 text-sm">
+        {
+          allSeries.map((s) => (
+            <li>
+              <a href={`#${s.id}`} class="flex justify-between gap-2 rounded-md px-3 py-1.5 text-fg-soft hover:bg-surface-2 hover:text-fg">
+                <span>{t(lang, s.name)}</span>
+                <span class="font-mono text-xs text-fg-mute">{s.posts.length}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+    <div class="space-y-16">
+      {
+        allSeries.map((s) => (
+          <section id={s.id} class="scroll-mt-24">
+            <div class="border-b border-line pb-3">
+              <h2 class="text-xl font-semibold tracking-tight">{t(lang, s.name)}</h2>
+              <p class="mt-1 text-sm text-fg-mute">{t(lang, s.blurb)}</p>
+            </div>
+            <div class="divide-y divide-line">
+              {s.posts.map((p) => (
+                <PostItem post={p} lang={lang} />
+              ))}
+            </div>
+          </section>
+        ))
+      }
+    </div>
+  </div>
+</Base>
