@@ -56,7 +56,7 @@ const principles = [
           <b class="text-brand">S</b>erving <b class="text-brand">d</b>otNET, <b class="text-brand">c</b>onstructing <b class="text-brand">b</b>rilliance
         </p>
         <div class="mt-5 flex flex-wrap gap-2">
-          <a href={site.mvpProfile} target="_blank" rel="noopener" class="chip border-brand/40 py-1 text-brand"><Icon name="award" size={12} /> Microsoft MVP · C# / .NET</a>
+          <a href={site.mvpProfile} target="_blank" rel="noopener" class="chip border-brand/40 py-1 text-brand"><Icon name="award" size={12} /> Microsoft MVP · {site.mvpSince} – {L('至今', 'present')}</a>
           <span class="chip py-1">{L('《.NET骚操作》作者', 'Author of “.NET骚操作”')}</span>
           <span class="chip py-1">.NET Conf China {L('讲师', 'speaker')}</span>
         </div>
@@ -69,7 +69,7 @@ const principles = [
           <>
             <p>
               你好，我是周杰，网名 <strong class="text-fg">sdcb</strong>——它是 “<strong class="text-fg">S</strong>erving <strong class="text-fg">d</strong>otNET,{' '}
-              <strong class="text-fg">c</strong>onstructing <strong class="text-fg">b</strong>rilliance” 的缩写，也是我的个人品牌。我是一名微软 MVP，专注 C# / .NET。
+              <strong class="text-fg">c</strong>onstructing <strong class="text-fg">b</strong>rilliance” 的缩写，也是我的个人品牌。我从 {site.mvpSince} 年起连续当选微软 MVP，专注 C# / .NET。
             </p>
             <p>
               2013 年我在博客园写下第一篇关于 Direct2D 的文章，后来有了《.NET骚操作》博客和公众号。这些年我做的事情大致可以概括成一句话：
@@ -84,7 +84,7 @@ const principles = [
           <>
             <p>
               Hi, I’m ZHOU Jie, better known as <strong class="text-fg">sdcb</strong> — short for “<strong class="text-fg">S</strong>erving{' '}
-              <strong class="text-fg">d</strong>otNET, <strong class="text-fg">c</strong>onstructing <strong class="text-fg">b</strong>rilliance”. I’m a Microsoft MVP focused on C# and .NET.
+              <strong class="text-fg">d</strong>otNET, <strong class="text-fg">c</strong>onstructing <strong class="text-fg">b</strong>rilliance”. I’ve been a Microsoft MVP every year since {site.mvpSince}, focused on C# and .NET.
             </p>
             <p>
               I wrote my first blog post, about Direct2D, in 2013; the “.NET骚操作” blog and WeChat account followed. What I do boils down to one line:

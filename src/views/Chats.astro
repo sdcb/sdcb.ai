@@ -6,7 +6,8 @@ import PostItem from '../components/PostItem.astro';
 import { t, fmtNumber, fmtDate, type Lang } from '../i18n';
 import { snapshot, repo, release, dockerPulls } from '../data/snapshot';
 import { posts } from '../data/writing';
-import { wechatGroups } from '../data/community';
+import { qqGroups, wechatGroups } from '../data/community';
+import { roadmap, watching } from '../data/chats-roadmap';
 
 interface Props {
   lang: Lang;
@@ -20,6 +21,7 @@ const pulls = dockerPulls(['chats']);
 const minorReleases = (snapshot.github.history.chats ?? []).filter((h) => /^1\.\d+\.0/.test(h.name));
 const chatsPosts = posts.filter((p) => p.series === 'chats').slice(0, 6);
 const wechat = wechatGroups.find((g) => g.key === 'chats')!;
+const chatsQQ = qqGroups.find((g) => g.id === wechat.fallbackQQ)!;
 
 const dockerCmd = `mkdir -p ./AppData && chmod 755 ./AppData && docker run --restart unless-stopped --name sdcb-chats \\
   -e DBType=sqlite -e ConnectionStrings__ChatsDB="Data Source=./AppData/chats.db" \\
@@ -60,7 +62,7 @@ const features = [
     <div class="container-x relative pt-20 pb-12 text-center sm:pt-28">
       <div class="flex flex-wrap justify-center gap-2">
         {rel && <a href={rel.url} target="_blank" rel="noopener" class="chip hover:text-fg">latest {rel.name} · {fmtDate(rel.publishedAt, lang)}</a>}
-        <span class="chip border-warn/40 text-warn">{L('2.0 筹划中', '2.0 in planning')}</span>
+        <a href="#roadmap" class="chip border-warn/40 text-warn hover:border-warn">{L('2.0 路线图', '2.0 roadmap')} ↓</a>
       </div>
       <h1 class="mx-auto mt-6 max-w-4xl text-4xl font-bold tracking-tight text-balance sm:text-6xl">
         {L('聚合所有大模型，', 'Every LLM,')}
@@ -117,8 +119,59 @@ const features = [
     </div>
   </section>
 
+  <section id="roadmap" class="relative scroll-mt-20 overflow-hidden border-b border-line py-24">
+    <div class="grid-bg pointer-events-none absolute inset-0 opacity-50 [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_70%)]"></div>
+    <div class="container-x relative">
+      <div class="max-w-3xl">
+        <p class="eyebrow">Chats 2.0</p>
+        <h2 class="h-section mt-3">{L('从聊天工具，到能干活的 Agent 平台', 'From a chat app to an agent platform that gets work done')}</h2>
+        <p class="lead mt-4">
+          {
+            L(
+              '2.0 的重心是 Agent：让 AI 拥有持久的工作环境，能把做好的东西直接发布出去，并且在协作时更像一个靠谱的同事。',
+              '2.0 is about agents: a persistent place for the AI to work, a way to publish what it builds, and collaboration that feels like working with a reliable colleague.',
+            )
+          }
+        </p>
+      </div>
+
+      <div class="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+        {
+          roadmap.map((r, i) => (
+            <article
+              class:list={['card flex flex-col p-6', i < 2 ? 'lg:col-span-3' : 'lg:col-span-2', i === 0 && 'border-brand/40 bg-gradient-to-b from-brand-soft to-surface']}
+              data-reveal
+              style={`--delay:${(i % 3) * 70}ms`}
+            >
+              <div class="flex items-center gap-3">
+                <span class="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand">
+                  <Icon name={r.icon as any} size={17} />
+                </span>
+                <h3 class="text-lg font-semibold">{t(lang, r.title)}</h3>
+              </div>
+              <p class="mt-3 text-sm text-fg-soft">{t(lang, r.pitch)}</p>
+              <ul class="mt-4 space-y-2 border-t border-line pt-4 text-sm text-fg-soft">
+                {r.items.map((item) => (
+                  <li class="flex gap-2">
+                    <span class="mt-2 size-1 shrink-0 rounded-full bg-brand" />
+                    <span>{t(lang, item)}</span>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))
+        }
+      </div>
+
+      <div class="mt-6 flex flex-col gap-2 text-sm text-fg-mute sm:flex-row sm:items-center sm:justify-between">
+        <p class="inline-flex items-center gap-2"><Icon name="eye" size={14} /> {t(lang, watching)}</p>
+        <p class="text-xs">{L('以上为规划方向，不代表最终功能与发布时间。', 'Directions, not commitments — scope and timing may change.')}</p>
+      </div>
+    </div>
+  </section>
+
   <section class="container-x pt-24">
-    <p class="eyebrow">{L('功能', 'Features')}</p>
+    <p class="eyebrow">{L('现在就能用', 'Available today')}</p>
     <h2 class="h-section mt-3">{L('为什么选择 Sdcb Chats', 'Why Sdcb Chats')}</h2>
     <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {
@@ -162,17 +215,19 @@ const features = [
         <p class="lead mt-4">
           {
             L(
-              '从 1.0 到 1.17，每个版本都有完整的发布说明。2.0 正在筹划中——想第一时间知道，Watch 仓库的 Releases 或者进群。',
-              'From 1.0 to 1.17, every release ships with full notes. 2.0 is being planned — watch the repo’s releases or join the group to hear first.',
+              '从 1.0 到 1.17，每个版本都有完整的发布说明。2.0 正在筹划中——想第一时间知道进展，可以 Watch 仓库的 Releases，或者进群。',
+              'From 1.0 to 1.17, every release ships with full notes. 2.0 is being planned — watch the repo’s releases or join the group to follow along.',
             )
           }
         </p>
         <a href="https://github.com/sdcb/chats/blob/main/doc/zh-CN/release-notes/README.md" target="_blank" rel="noopener" class="link mt-5 inline-flex items-center gap-1 text-sm">{L('全部发布说明', 'All release notes')} <Icon name="arrowUpRight" size={14} /></a>
       </div>
       <ol class="grid grid-cols-2 gap-2 font-mono text-xs sm:grid-cols-3 md:grid-cols-4">
-        <li class="rounded-lg border border-dashed border-warn/50 px-3 py-2.5 text-warn">
-          <div class="text-sm font-semibold">2.0</div>
-          <div class="mt-0.5 opacity-80">{L('筹划中', 'planning')}</div>
+        <li>
+          <a href="#roadmap" class="block rounded-lg border border-dashed border-warn/50 px-3 py-2.5 text-warn hover:border-warn">
+            <div class="text-sm font-semibold">2.0</div>
+            <div class="mt-0.5 opacity-80">{L('筹划中', 'planning')}</div>
+          </a>
         </li>
         {
           minorReleases.map((h, i) => (
@@ -212,7 +267,7 @@ const features = [
         <p class="mt-4 text-sm text-fg-soft">
           {L('微信扫码入群。二维码过期或群满时，请加 QQ 群 498452653 获取新的入群码。', 'Scan with WeChat. If the code has expired or the group is full, join QQ group 498452653 instead.')}
         </p>
-        <a href="https://qm.qq.com/q/AM8tY9cAsS" target="_blank" rel="noopener" class="btn-primary mt-5"><Icon name="users" /> QQ 498452653</a>
+        <a href={chatsQQ.link} target="_blank" rel="noopener" class="btn-primary mt-5"><Icon name="users" /> QQ {chatsQQ.id}</a>
       </div>
     </div>
   </section>

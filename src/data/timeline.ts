@@ -51,11 +51,12 @@ export const timeline: Milestone[] = [
   },
   {
     date: '2023',
-    title: { zh: 'OpenVINO.NET、Sdcb.Arithmetic、Sdcb.LibRaw', en: 'OpenVINO.NET, Sdcb.Arithmetic, Sdcb.LibRaw' },
+    title: { zh: '首次当选微软 MVP', en: 'First Microsoft MVP award' },
     body: {
-      zh: '高产的一年：Intel 推理、GMP/MPFR 高精度计算、相机 RAW 解析，以及一批国内大模型 SDK。',
-      en: 'A prolific year: Intel inference, GMP/MPFR arbitrary precision, camera RAW — plus a batch of LLM SDKs.',
+      zh: '此后连任至今。同样是高产的一年：OpenVINO.NET、Sdcb.Arithmetic（GMP/MPFR 高精度计算）、Sdcb.LibRaw（相机 RAW 解析），以及一批国内大模型 SDK。',
+      en: 'Renewed every year since. Also a prolific year: OpenVINO.NET, Sdcb.Arithmetic (GMP/MPFR arbitrary precision), Sdcb.LibRaw (camera RAW) and a batch of LLM SDKs.',
     },
+    highlight: true,
     link: 'https://www.cnblogs.com/sdcb/p/20231015-sdcb-openvino-net.html',
   },
   {
@@ -86,6 +87,15 @@ export const timeline: Milestone[] = [
     },
     link: 'https://www.cnblogs.com/sdcb/p/22863347/20260907-simdpaddleocr-intro',
     highlight: true,
+  },
+  {
+    date: 'Next',
+    title: { zh: 'Sdcb Chats 2.0：走向 Agent 平台', en: 'Sdcb Chats 2.0: toward an agent platform' },
+    body: {
+      zh: '持久化 Docker 工作区、一句话发布网站、会提问能插话的 Agent、有状态文件与可恢复的流式响应。',
+      en: 'Persistent Docker workspaces, one-sentence website publishing, an agent that asks and listens, stateful files and resumable streams.',
+    },
+    link: '/chats#roadmap',
   },
 ];
 

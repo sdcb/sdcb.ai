@@ -7,7 +7,7 @@ import PostItem from '../components/PostItem.astro';
 import { href, t, fmtNumber, fmtDate, type Lang } from '../i18n';
 import { snapshot, repo, release, nugetDownloads } from '../data/snapshot';
 import { posts } from '../data/writing';
-import { wechatGroups } from '../data/community';
+import { qqGroups, wechatGroups } from '../data/community';
 
 interface Props {
   lang: Lang;
@@ -22,6 +22,7 @@ const packages = snapshot.nuget.packages.filter((p) => p.id.toLowerCase().starts
 const totalDownloads = nugetDownloads(['Sdcb.SimdPaddleOCR']);
 const seriesPosts = posts.filter((p) => p.series === 'simd' && /SimdPaddleOCR|向量化/.test(p.title));
 const ocrWechat = wechatGroups.find((g) => g.key === 'ocr')!;
+const ocrQQ = qqGroups.find((g) => g.id === ocrWechat.fallbackQQ)!;
 
 const install = `dotnet add package Sdcb.SimdPaddleOCR
 dotnet add package Sdcb.SimdPaddleOCR.Models.ChineseV6Tiny`;
@@ -479,7 +480,7 @@ const matrix: { os: string; archs: string[]; gpu: string }[] = [
           }
         </p>
         <div class="mt-5 flex flex-wrap gap-3">
-          <a href="https://qm.qq.com/q/bPw5jAK4qk" target="_blank" rel="noopener" class="btn-primary"><Icon name="users" /> QQ 579060605</a>
+          <a href={ocrQQ.link} target="_blank" rel="noopener" class="btn-primary"><Icon name="users" /> QQ {ocrQQ.id}</a>
           <a href={href(lang, '/community')} class="btn-ghost">{L('全部社区入口', 'All community channels')}</a>
         </div>
       </div>

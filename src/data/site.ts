@@ -7,6 +7,7 @@ export const site = {
   authorZh: '周杰',
   avatar: 'https://avatars.githubusercontent.com/u/1317141?v=4',
   motto: 'Serving dotNET, constructing brilliance',
+  mvpSince: 2023,
   mvpProfile: 'https://mvp.microsoft.com/zh-cn/PublicProfile/5005250?fullName=Jie%20ZHOU',
   links: {
     github: 'https://github.com/sdcb',

@@ -83,7 +83,12 @@ const bust = snapshot.generatedAt.slice(0, 10).replaceAll('-', '');
             </div>
             <div>
               <h3 class="font-semibold">{t(lang, g.name)}</h3>
-              <p class="mt-2 text-sm text-fg-soft">{L('微信扫一扫加入。', 'Scan with WeChat to join.')}</p>
+              <p class="mt-2 text-sm text-fg-soft">{L('微信扫一扫，可加入以下群：', 'Scan with WeChat to join any of:')}</p>
+              <ul class="mt-2 flex flex-wrap gap-1.5">
+                {g.groups.map((x) => (
+                  <li class="chip">{t(lang, x)}</li>
+                ))}
+              </ul>
               <p class="mt-3 text-sm text-fg-mute">
                 {L('过期了？加 QQ 群', 'Expired? Join QQ group')} <span class="font-mono text-fg">{g.fallbackQQ}</span>
               </p>
