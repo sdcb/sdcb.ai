@@ -35,15 +35,23 @@ const samples = [
 using Sdcb.SimdPaddleOCR;
 using Sdcb.SimdPaddleOCR.Models.ChineseV6Tiny;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.PixelFormats;
 
 using PaddleOcrAll ocr = await PaddleOcrAll.LoadAsync(ChineseV6TinyModels.Default);
-using Image<Rgba32> image = await Image.LoadAsync<Rgba32>("sample.jpg");
+// Clone Default：改 Configuration.Default 会丢掉 PNG/JPEG 解码器
+Configuration cfg = Configuration.Default.Clone();
+cfg.PreferContiguousImageBuffers = true;
+using Image<Rgba32> image = await Image.LoadAsync<Rgba32>(
+    new DecoderOptions { Configuration = cfg }, "sample.jpg");
+if (!image.DangerousTryGetSinglePixelMemory(out Memory<Rgba32> memory))
+{
+    Rgba32[] copy = new Rgba32[image.Width * image.Height];
+    image.CopyPixelDataTo(copy);
+    memory = copy;
+}
 
-Rgba32[] pixels = new Rgba32[image.Width * image.Height];
-image.CopyPixelDataTo(pixels);
-
-PaddleOcrResult result = ocr.Run(MemoryMarshal.AsBytes(pixels.AsSpan()),
+PaddleOcrResult result = ocr.Run(MemoryMarshal.AsBytes(memory.Span),
     image.Width, image.Height, format: ImagePixelFormat.Rgba32);
 Console.WriteLine(result.Text);`,
   },
@@ -176,7 +184,7 @@ const matrix: { os: string; archs: string[]; gpu: string }[] = [
     {
       [
         [L('0 个', '0'), L('原生推理依赖', 'native inference deps')],
-        ['0.43 MB', L('核心包体积（nupkg）', 'core package (nupkg)')],
+        ['896 KB', L('核心包体积（nupkg）', 'core package (nupkg)')],
         ['2.36%', L('tiny 模型 CER（CI 数据集）', 'tiny-model CER on CI set')],
         ['15×', L('3080 Ti 上 medium 的 GPU 加速（2.0）', 'medium GPU speedup on a 3080 Ti (2.0)')],
       ].map(([v, l]) => (
