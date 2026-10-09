@@ -94,6 +94,20 @@ try
 }
 finally { bitmap.UnlockBits(data); }`,
   },
+  {
+    id: 'gpu',
+    label: 'GPU · Vulkan/Metal',
+    code: `using PaddleOcrAll ocr = await PaddleOcrAll.LoadAsync(ChineseV6TinyModels.Default,
+    new PaddleOcrOptions
+    {
+        Detector   = new PaddleOcrDetectorOptions   { Backend = OcrBackend.Vulkan },
+        Recognizer = new PaddleOcrRecognizerOptions { Backend = OcrBackend.Vulkan },
+        Classifier = new PaddleOcrClassifierOptions { Backend = OcrBackend.Vulkan },
+    });
+
+// 默认 OcrBackend.Auto：有满足条件的 GPU 就用，否则留在 CPU。
+// macOS arm64 上把 Vulkan 换成 OcrBackend.Metal。`,
+  },
 ];
 
 const backends = [
@@ -101,7 +115,7 @@ const backends = [
   { name: 'AVX-512 · VNNI', note: 'x64', icon: 'cpu' },
   { name: 'AdvSIMD (NEON)', note: 'ARM64', icon: 'cpu' },
   { name: 'Vector<T> / scalar', note: 'netstandard2.0', icon: 'cpu' },
-  { name: 'Vulkan', note: 'Windows · Linux · Android', icon: 'zap', gpu: true },
+  { name: 'Vulkan', note: 'cross-platform', icon: 'zap', gpu: true },
   { name: 'Metal', note: 'macOS', icon: 'zap', gpu: true },
 ];
 
@@ -164,7 +178,7 @@ const matrix: { os: string; archs: string[]; gpu: string }[] = [
         [L('0 个', '0'), L('原生推理依赖', 'native inference deps')],
         ['0.43 MB', L('核心包体积（nupkg）', 'core package (nupkg)')],
         ['2.36%', L('tiny 模型 CER（CI 数据集）', 'tiny-model CER on CI set')],
-        ['−300 MB', L('1.4 相对 1.3 的峰值内存', 'peak memory, 1.4 vs 1.3')],
+        ['15×', L('3080 Ti 上 medium 的 GPU 加速（2.0）', 'medium GPU speedup on a 3080 Ti (2.0)')],
       ].map(([v, l]) => (
         <div class="px-6 py-6">
           <div class="font-mono text-3xl font-semibold tracking-tight">{v}</div>
@@ -246,7 +260,7 @@ const matrix: { os: string; archs: string[]; gpu: string }[] = [
           }
         </div>
         <p class="mt-4 text-[11px] text-fg-mute">
-          {L('青色为 2.0（feature/2.0 分支）新增的 GPU 后端，仅 net10.0。', 'Teal: GPU backends new in 2.0 (feature/2.0), net10.0 only.')}
+          {L('青色为 2.0 新增的 GPU 后端，仅 net10.0。', 'Teal: GPU backends, new in 2.0, net10.0 only.')}
         </p>
       </div>
     </div>
@@ -289,38 +303,37 @@ const matrix: { os: string; archs: string[]; gpu: string }[] = [
     <p class="lead mt-4 max-w-3xl">
       {
         L(
-          '数据来自仓库 README 与 GitHub Actions 多平台基准（去掉首张预热后的中位墙钟）。每次 CI 都会在 Windows / Linux / macOS 多架构上重跑一遍。',
-          'Numbers from the README and the multi-platform GitHub Actions benchmark (median wall-clock, warm-up excluded). CI re-runs them on Windows / Linux / macOS for every change.',
+          '数据来自仓库 docs/ 下各机型报告（去掉首张预热后的中位墙钟，同机 CPU 对比 Vulkan / Metal GPU）。CPU 数据每次 CI 都会在 Windows / Linux / macOS 多架构上重跑。',
+          'Numbers from the per-device reports under docs/ (median wall-clock, warm-up excluded; same-machine CPU vs Vulkan / Metal GPU). CPU numbers are re-measured by CI on Windows / Linux / macOS for every change.',
         )
       }
     </p>
     <div class="mt-10 grid gap-5 lg:grid-cols-3">
       <div class="card p-6" data-reveal>
-        <h3 class="text-sm font-medium">{L('Ryzen 7 5800X · 平均耗时 / 张', 'Ryzen 7 5800X · mean per image')}</h3>
-        <p class="mt-1 mb-5 text-xs text-fg-mute">4 workers · 99 images · net10 AVX2</p>
+        <h3 class="text-sm font-medium">{L('RTX 3080 Ti · 端到端 / 张', 'RTX 3080 Ti · end-to-end per image')}</h3>
+        <p class="mt-1 mb-5 text-xs text-fg-mute">Ryzen 7 5800X CPU vs Vulkan · 100 images · 2.0</p>
         <BarCompare
           unit=" ms"
-          beforeLabel="1.3.0"
-          afterLabel="1.4.2"
+          beforeLabel="CPU"
+          afterLabel="Vulkan"
           rows={[
-            { label: 'tiny', before: 86.0, after: 63.1 },
-            { label: 'small', before: 222, after: 200 },
-            { label: 'medium', before: 628, after: 585 },
+            { label: 'tiny', before: 49.6, after: 22.1 },
+            { label: 'small', before: 166.8, after: 27.4 },
+            { label: 'medium', before: 523.2, after: 36.4 },
           ]}
         />
       </div>
       <div class="card p-6" data-reveal style="--delay:80ms">
-        <h3 class="text-sm font-medium">{L('GitHub Runner · tiny 中位耗时', 'GitHub runner · tiny median')}</h3>
-        <p class="mt-1 mb-5 text-xs text-fg-mute">linux-arm64 N2 · win-x64 EPYC 7763</p>
+        <h3 class="text-sm font-medium">{L('Intel Arc B580 · 端到端 / 张', 'Intel Arc B580 · end-to-end per image')}</h3>
+        <p class="mt-1 mb-5 text-xs text-fg-mute">CPU vs Vulkan · 三轮中位 · 2.0</p>
         <BarCompare
           unit=" ms"
-          beforeLabel="1.3.0"
-          afterLabel="1.4.2"
+          beforeLabel="CPU"
+          afterLabel="Vulkan"
           rows={[
-            { label: 'arm64 AdvSIMD', before: 241, after: 180 },
-            { label: 'arm64 netstandard2.0', before: 374, after: 295 },
-            { label: 'x64 netstandard2.0', before: 343, after: 228 },
-            { label: 'x64 no-AVX', before: 481, after: 380 },
+            { label: 'tiny', before: 66.0, after: 22.2 },
+            { label: 'small', before: 205.9, after: 32.3 },
+            { label: 'medium', before: 546.5, after: 57.1 },
           ]}
         />
       </div>
@@ -426,7 +439,7 @@ const matrix: { os: string; archs: string[]; gpu: string }[] = [
     <div class="grid gap-12 lg:grid-cols-[1fr_1.6fr]">
       <div>
         <p class="eyebrow">{L('版本', 'Releases')}</p>
-        <h2 class="h-section mt-3">{L('一个月，五个版本', 'Five releases in a month')}</h2>
+        <h2 class="h-section mt-3">{L('发布历史', 'Release history')}</h2>
         <ol class="mt-8 space-y-0 border-l border-line">
           {
             history.map((h, i) => (
@@ -439,16 +452,11 @@ const matrix: { os: string; archs: string[]; gpu: string }[] = [
               </li>
             ))
           }
-          <li class="relative pl-6">
-            <span class="absolute top-1.5 -left-[5px] size-2.5 rounded-full border border-accent bg-bg" />
-            <span class="font-mono text-sm font-semibold text-accent">2.0</span>
-            <div class="font-mono text-xs text-fg-mute">{L('Vulkan / Metal GPU · 开发中', 'Vulkan / Metal GPU · in progress')}</div>
-          </li>
         </ol>
       </div>
       <div>
         <p class="eyebrow">{L('系列文章', 'The series')}</p>
-        <h2 class="h-section mt-3">{L('从 0 到 1.4 的开发手记', 'Dev diary, 0 → 1.4')}</h2>
+        <h2 class="h-section mt-3">{L('从 0 到 2.0 的开发手记', 'Dev diary, 0 → 2.0')}</h2>
         <div class="mt-6 divide-y divide-line border-y border-line">
           {seriesPosts.map((p) => <PostItem post={p} lang={lang} summary />)}
         </div>

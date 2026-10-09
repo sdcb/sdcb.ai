@@ -129,23 +129,23 @@ const evolution = [
   <!-- NOW -->
   <section class="container-x pt-24">
     <p class="eyebrow">{L('最近在忙', 'Now')}</p>
-    <h2 class="h-section mt-3">{L('正在进行的两件大事', 'Two big things in flight')}</h2>
+    <h2 class="h-section mt-3">{L('一件刚发布，一件在途中', 'One just shipped, one in flight')}</h2>
 
     <div class="mt-10 grid gap-5 lg:grid-cols-[1.35fr_1fr]">
       <article class="card relative overflow-hidden p-7 sm:p-9" data-reveal>
         <div class="pointer-events-none absolute -top-24 -right-24 size-72 rounded-full bg-brand/20 blur-3xl"></div>
         <div class="relative">
           <div class="flex flex-wrap items-center gap-2">
-            <span class="chip border-brand/40 text-brand">feature/2.0</span>
-            {ocrRelease && <span class="chip">latest {ocrRelease.tag}</span>}
+            <span class="chip border-accent/40 text-accent">{L('2.0 已发布', '2.0 released')}</span>
+            {ocrRelease && <a href={ocrRelease.url} target="_blank" rel="noopener" class="chip hover:text-fg">latest {ocrRelease.tag}</a>}
             <span class="chip"><Icon name="star" size={11} /> <span data-repo-stars="SimdPaddleOCR">{fmtNumber(repo('SimdPaddleOCR')?.stars ?? 0, 'en')}</span></span>
           </div>
           <h3 class="mt-5 font-mono text-3xl font-bold tracking-tight">SimdPaddleOCR 2.0</h3>
           <p class="mt-3 max-w-lg text-fg-soft">
             {
               L(
-                '给 PaddleSharp 与 OpenVINO.NET 在 AI 时代的一次彻底焕新：不依赖 Paddle Inference、ONNX Runtime 或 OpenCV，所有算子都是 C# 手写的。2.0 在 CPU SIMD 之外，新增 Vulkan 与 Metal GPU 后端。',
-                'A ground-up reinvention of PaddleSharp and OpenVINO.NET for the AI era: no Paddle Inference, no ONNX Runtime, no OpenCV — every operator is hand-written C#. 2.0 adds Vulkan and Metal GPU backends on top of CPU SIMD.',
+                '给 PaddleSharp 与 OpenVINO.NET 在 AI 时代的一次彻底焕新：不依赖 Paddle Inference、ONNX Runtime 或 OpenCV，所有算子都是 C# 手写的。2.0 已在 CPU SIMD 之外加上 Vulkan / Metal GPU 后端，RTX 3080 Ti 上 medium 端到端提速 15 倍。',
+                'A ground-up reinvention of PaddleSharp and OpenVINO.NET for the AI era: no Paddle Inference, no ONNX Runtime, no OpenCV — every operator is hand-written C#. 2.0 adds Vulkan / Metal GPU on top of CPU SIMD: 15× end-to-end on an RTX 3080 Ti (medium).',
               )
             }
           </p>

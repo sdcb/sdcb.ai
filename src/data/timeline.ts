@@ -82,8 +82,8 @@ export const timeline: Milestone[] = [
     date: '2026',
     title: { zh: 'SimdPaddleOCR：纯 C# 的推理引擎', en: 'SimdPaddleOCR: inference in pure C#' },
     body: {
-      zh: '不再绑定任何原生推理库，手写 SIMD 内核和托管 ONNX 解释器，一个月内从 1.0 迭代到 1.4，2.0 开始支持 Vulkan / Metal GPU。同年发布纯 C# 翻译模型推理库 HyMT2Sharp。',
-      en: 'No native inference runtime at all — hand-written SIMD kernels and a managed ONNX interpreter, 1.0 → 1.4 in a month, with Vulkan / Metal GPU in 2.0. HyMT2Sharp, a pure-C# translation LLM runtime, ships the same month.',
+      zh: '不再绑定任何原生推理库，手写 SIMD 内核和托管 ONNX 解释器，一个月内从 1.0 迭代到 1.4；10 月 2.0 发布，加上 Vulkan / Metal GPU 后端，RTX 3080 Ti 上提速 15 倍。同年发布纯 C# 翻译模型推理库 HyMT2Sharp。',
+      en: 'No native inference runtime at all — hand-written SIMD kernels and a managed ONNX interpreter, 1.0 → 1.4 in a month; 2.0 landed in October with Vulkan / Metal GPU backends, 15× faster on an RTX 3080 Ti. HyMT2Sharp, a pure-C# translation LLM runtime, shipped the same month.',
     },
     link: 'https://www.cnblogs.com/sdcb/p/22863347/20260907-simdpaddleocr-intro',
     highlight: true,

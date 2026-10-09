@@ -8,7 +8,7 @@ export const series: Series[] = [
   {
     id: 'simd',
     name: { zh: 'SimdPaddleOCR 与手写 SIMD', en: 'SimdPaddleOCR & hand-written SIMD' },
-    blurb: { zh: '纯 C# 推理引擎从 0 到 1.4 的全过程。', en: 'Building a pure-C# inference engine, 1.0 → 1.4.' },
+    blurb: { zh: '纯 C# 推理引擎从 0 到 2.0 的全过程。', en: 'Building a pure-C# inference engine, 1.0 → 2.0.' },
     match: /SimdPaddleOCR|向量化|HyMT2Sharp/i,
   },
   {
