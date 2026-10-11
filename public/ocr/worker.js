@@ -1,5 +1,6 @@
 // Hosts the .NET WebAssembly runtime off the main thread so OCR never blocks the UI.
-import { dotnet } from './_framework/dotnet.js';
+// dotnet.js has no fingerprint in its name, so forward the page's cache-busting query.
+const { dotnet } = await import('./_framework/dotnet.js' + new URL(import.meta.url).search);
 
 let api;
 

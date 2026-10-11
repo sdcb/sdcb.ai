@@ -8,6 +8,8 @@ interface Props {
 }
 const { lang } = Astro.props;
 const L = (zh: string, en: string) => t(lang, { zh, en });
+// dotnet.js / worker.js are not fingerprinted; a per-build query keeps stale edge/browser copies from pairing with new hashed assets.
+const ocrVersion = Date.now().toString(36);
 
 const i18n = {
   downloading: L('正在下载 .NET 运行时与模型', 'Downloading .NET runtime and model'),
@@ -49,6 +51,7 @@ const i18n = {
       id="pg"
       class="grid gap-5 lg:grid-cols-[1.35fr_1fr]"
       data-i18n={JSON.stringify(i18n)}
+      data-ocr-version={ocrVersion}
     >
       <!-- left: image -->
       <div class="card overflow-hidden">
@@ -147,7 +150,7 @@ const i18n = {
   }
   const fmtMs = (ms: number) => (ms >= 1000 ? `${(ms / 1000).toFixed(2)} s` : `${ms.toFixed(0)} ms`);
 
-  const worker = new Worker('/ocr/worker.js', { type: 'module' });
+  const worker = new Worker(`/ocr/worker.js?v=${root.dataset.ocrVersion}`, { type: 'module' });
   worker.onmessage = (e) => {
     const m = e.data;
     if (m.type === 'progress') {
