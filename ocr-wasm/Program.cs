@@ -24,6 +24,10 @@ public static partial class OcrApi
         {
             LineWorkerCount = 1,
             DetIntraOpThreads = 1,
+            // Auto probes the Vulkan/Metal backends, which have no native entry points in the browser ("null function").
+            Detector = new PaddleOcrDetectorOptions { Backend = OcrBackend.Cpu },
+            Recognizer = new PaddleOcrRecognizerOptions { Backend = OcrBackend.Cpu },
+            Classifier = new PaddleOcrClassifierOptions { Backend = OcrBackend.Cpu },
         });
         return Json(w =>
         {
