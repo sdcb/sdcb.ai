@@ -174,31 +174,7 @@ const evolution = [
       </article>
 
       <div class="grid gap-5">
-        <article class="card flex flex-col p-7" data-reveal style="--delay:80ms">
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="chip border-warn/40 text-warn">{L('2.0 筹划中', '2.0 in planning')}</span>
-            {chatsRelease && <span class="chip">latest {chatsRelease.name}</span>}
-          </div>
-          <h3 class="mt-4 font-mono text-2xl font-bold tracking-tight">Sdcb Chats</h3>
-          <p class="mt-2 text-sm leading-relaxed text-fg-soft">
-            {
-              L(
-                '大模型前端与 AI 网关，1.x 已迭代到 1.17。2.0 转向 Agent：持久化 Docker 工作区、一句话把网站发上线、会提问也能插话的 Agent。',
-                'LLM front-end and AI gateway, now at 1.17. 2.0 turns to agents: persistent Docker workspaces, shipping websites from chat, and an agent that asks and listens.',
-              )
-            }
-          </p>
-          <div class="mt-4 flex gap-5 font-mono text-xs text-fg-mute">
-            <span><b class="text-base text-fg">{fmtNumber(dockerPulls(['chats']), lang)}</b> {L('次 Docker 拉取', 'Docker pulls')}</span>
-            <span><b class="text-base text-fg" data-repo-stars="chats">{fmtNumber(repo('chats')?.stars ?? 0, 'en')}</b> Stars</span>
-          </div>
-          <div class="mt-5 flex gap-5 text-sm">
-            <a href={href(lang, '/chats') + '#roadmap'} class="link inline-flex items-center gap-1">{L('2.0 路线图', '2.0 roadmap')} <Icon name="arrowRight" size={14} /></a>
-            <a href={href(lang, '/chats')} class="inline-flex items-center gap-1 text-fg-soft hover:text-fg">{L('了解 Chats', 'About Chats')}</a>
-          </div>
-        </article>
-
-        <a href={href(lang, '/wubi')} class="card group flex items-center gap-5 p-6" data-reveal style="--delay:160ms">
+        <a href={href(lang, '/wubi')} class="card group flex items-center gap-5 p-6" data-reveal style="--delay:80ms">
           <span class="grid size-14 shrink-0 place-items-center rounded-xl bg-[#e0475b] text-3xl font-semibold text-white shadow-lg shadow-[#e0475b]/30">五</span>
           <div class="min-w-0">
             <div class="flex items-center gap-2">
@@ -212,7 +188,7 @@ const evolution = [
           <Icon name="arrowRight" class="shrink-0 text-fg-mute transition-transform group-hover:translate-x-0.5 group-hover:text-fg" />
         </a>
 
-        <a href={href(lang, '/hymt2sharp')} class="card group flex items-center gap-5 p-6" data-reveal style="--delay:240ms">
+        <a href={href(lang, '/hymt2sharp')} class="card group flex items-center gap-5 p-6" data-reveal style="--delay:160ms">
           <span class="grid size-14 shrink-0 place-items-center rounded-xl bg-[#2f6fdc] text-3xl font-semibold text-white shadow-lg shadow-[#2f6fdc]/30">译</span>
           <div class="min-w-0">
             <div class="flex items-center gap-2">
@@ -222,6 +198,21 @@ const evolution = [
             <p class="mt-1.5 text-sm text-fg-soft">
               {L('纯 C# 的混元翻译跑上了显卡：3080 Ti 上 prefill 1.58 万 tok/s，权重也在 NuGet 上。', 'Pure-C# Hunyuan translation on the GPU: 15.8k tok/s prefill on a 3080 Ti, weights on NuGet.')}
             </p>
+          </div>
+          <Icon name="arrowRight" class="shrink-0 text-fg-mute transition-transform group-hover:translate-x-0.5 group-hover:text-fg" />
+        </a>
+
+        <a href={href(lang, '/chats')} class="card group flex items-center gap-5 p-6" data-reveal style="--delay:240ms">
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="font-mono font-semibold">Sdcb Chats</h3>
+              {chatsRelease && <span class="chip">latest {chatsRelease.name}</span>}
+            </div>
+            <p class="mt-1.5 text-sm text-fg-soft">{L('大模型前端与 AI 网关，持续维护中。', 'LLM front-end and AI gateway, actively maintained.')}</p>
+            <div class="mt-2 flex gap-4 font-mono text-xs text-fg-mute">
+              <span><b class="text-fg">{fmtNumber(dockerPulls(['chats']), lang)}</b> {L('次 Docker 拉取', 'Docker pulls')}</span>
+              <span><b class="text-fg" data-repo-stars="chats">{fmtNumber(repo('chats')?.stars ?? 0, 'en')}</b> Stars</span>
+            </div>
           </div>
           <Icon name="arrowRight" class="shrink-0 text-fg-mute transition-transform group-hover:translate-x-0.5 group-hover:text-fg" />
         </a>
