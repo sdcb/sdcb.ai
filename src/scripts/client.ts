@@ -85,6 +85,90 @@ document.querySelectorAll<HTMLDialogElement>('dialog').forEach((d) =>
   }),
 );
 
+// wubi split demo (/wubi)
+document.querySelectorAll<HTMLElement>('[data-wubi]').forEach((root) => {
+  const picks = root.querySelectorAll<HTMLButtonElement>('[data-wubi-pick]');
+  const panels = root.querySelectorAll<HTMLElement>('[data-wubi-panel]');
+  let timer: number | undefined;
+  let autoplayed = false;
+
+  const paint = (panel: HTMLElement, fn: (p: SVGPathElement, i: number, base: number) => [string, number]) =>
+    panel.querySelectorAll<SVGPathElement>('[data-stroke]').forEach((p, i) => {
+      const [color, opacity] = fn(p, i, Number(p.dataset.color));
+      p.style.fill = `var(--wb-${color})`;
+      p.style.opacity = String(opacity);
+    });
+  const reset = (panel: HTMLElement) => {
+    window.clearInterval(timer);
+    panel.querySelectorAll('[data-active]').forEach((el) => el.removeAttribute('data-active'));
+    paint(panel, (_, __, c) => [c < 0 ? 'off' : String(c), 1]);
+  };
+  const highlight = (panel: HTMLElement, strokes: Set<number>, color: string) =>
+    paint(panel, (_, i) => (strokes.has(i) ? [color, 1] : ['off', 0.45]));
+
+  const play = (panel: HTMLElement, kind: string) => {
+    reset(panel);
+    const parts = [...panel.querySelectorAll<HTMLElement>('[data-wubi-part]')].filter((b) => b.dataset.strokes && b.dataset.color !== '4');
+    const total = kind === 'split' ? parts.length : panel.querySelectorAll('[data-stroke]').length;
+    let step = 0;
+    const frame = () => {
+      if (kind === 'split') {
+        const lit = new Map<number, string>();
+        parts.forEach((b, k) => {
+          b.toggleAttribute('data-active', k === step - 1);
+          if (k < step) b.dataset.strokes!.split(',').forEach((s) => lit.set(Number(s), b.dataset.color!));
+        });
+        paint(panel, (_, i) => (lit.has(i) ? [lit.get(i)!, 1] : ['off', 0.25]));
+      } else {
+        paint(panel, (_, i, c) => [c < 0 ? 'off' : String(c), i < step ? 1 : 0]);
+      }
+    };
+    frame();
+    timer = window.setInterval(
+      () => {
+        if (++step > total + 1) return reset(panel);
+        frame();
+      },
+      kind === 'split' ? 900 : 380,
+    );
+  };
+
+  panels.forEach((panel) => {
+    panel.querySelectorAll<HTMLElement>('[data-wubi-part]').forEach((b) => {
+      const on = () => {
+        window.clearInterval(timer);
+        highlight(panel, new Set(b.dataset.strokes!.split(',').filter(Boolean).map(Number)), b.dataset.color!);
+      };
+      b.addEventListener('mouseenter', on);
+      b.addEventListener('focus', on);
+      b.addEventListener('click', on);
+      b.addEventListener('mouseleave', () => reset(panel));
+      b.addEventListener('blur', () => reset(panel));
+    });
+    panel.querySelectorAll<HTMLButtonElement>('[data-wubi-play]').forEach((b) => b.addEventListener('click', () => play(panel, b.dataset.wubiPlay!)));
+  });
+
+  picks.forEach((btn) =>
+    btn.addEventListener('click', () => {
+      picks.forEach((x) => x.setAttribute('aria-selected', String(x === btn)));
+      panels.forEach((p) => {
+        reset(p);
+        p.hidden = p.dataset.wubiPanel !== btn.dataset.wubiPick;
+      });
+      play(panels[Number(btn.dataset.wubiPick)], 'split');
+    }),
+  );
+
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    new IntersectionObserver((entries, io) => {
+      if (autoplayed || !entries.some((e) => e.isIntersecting)) return;
+      autoplayed = true;
+      io.disconnect();
+      window.setTimeout(() => play(panels[0], 'split'), 500);
+    }).observe(root);
+  }
+});
+
 // reveal on scroll
 const reveal = new IntersectionObserver(
   (entries) => {

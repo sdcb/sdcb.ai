@@ -198,15 +198,18 @@ const evolution = [
           </div>
         </article>
 
-        <a href="https://github.com/sdcb/HyMT2Sharp" target="_blank" rel="noopener" class="card group p-6" data-reveal style="--delay:160ms">
-          <div class="flex items-center justify-between">
-            <span class="chip">{L('新发布', 'New')}</span>
-            <Icon name="arrowUpRight" class="text-fg-mute group-hover:text-fg" />
+        <a href={href(lang, '/wubi')} class="card group flex items-center gap-5 p-6" data-reveal style="--delay:160ms">
+          <span class="grid size-14 shrink-0 place-items-center rounded-xl bg-[#e0475b] text-3xl font-semibold text-white shadow-lg shadow-[#e0475b]/30">五</span>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="chip border-accent/40 text-accent">{L('新上线', 'New')}</span>
+              <h3 class="font-semibold">{L('五笔字根图解', 'Wubi 86 Root Viewer')}</h3>
+            </div>
+            <p class="mt-1.5 text-sm text-fg-soft">
+              {L('哪个字忘了怎么拆，查一下就知道：字根、笔画、识别码一目了然。', 'Forgot how to split a character? See its roots, strokes and ID code at a glance.')}
+            </p>
           </div>
-          <h3 class="mt-3 font-mono text-lg font-semibold">HyMT2Sharp</h3>
-          <p class="mt-1.5 text-sm text-fg-soft">
-            {L('纯 C# 的腾讯混元翻译大模型推理：不依赖 llama.cpp，本地离线翻译。', 'Pure-C# inference for Tencent Hunyuan MT2 — no llama.cpp, offline translation.')}
-          </p>
+          <Icon name="arrowRight" class="shrink-0 text-fg-mute transition-transform group-hover:translate-x-0.5 group-hover:text-fg" />
         </a>
       </div>
     </div>

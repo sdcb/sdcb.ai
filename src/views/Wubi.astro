@@ -1,0 +1,502 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import CodeWindow from '../components/CodeWindow.astro';
+import PostItem from '../components/PostItem.astro';
+import { t, fmtNumber, type Lang } from '../i18n';
+import { repo } from '../data/snapshot';
+import { posts } from '../data/writing';
+import demo from '../data/wubi-demo.json';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const L = (zh: string, en: string) => t(lang, { zh, en });
+
+const APP = 'https://wubi.sdcb.ai';
+const REPO = 'https://github.com/sdcb/wubi86-viewer';
+const BLOG = 'https://www.cnblogs.com/sdcb/p/23262260/20261011-wubi86-viewer';
+const q = (s: string) => `${APP}/?q=${encodeURIComponent(s)}`;
+
+const r = repo('wubi86-viewer');
+const m = demo.meta;
+const segTotal = m.seg.source + m.seg.exact + m.seg.approx;
+const wubiPosts = posts.filter((p) => /五笔/.test(p.title)).slice(0, 4);
+
+const examples = ['胜', '露', '鼎', 'etg', '中国人', '今天吃什么'];
+
+const notes: Record<string, { zh: string; en: string }> = {
+  胜: { zh: '月 + 撇 + 青字头，只有 3 个字根，补末笔字型识别码：末笔横、左右型 → 11 区位 → G。', en: 'Moon + pie + the top of 青 — only 3 roots, so a final-stroke ID code is added: last stroke heng, left-right → 11 → G.' },
+  露: { zh: '超过四个字根：取第一、二、三和最后一个，中间那个“夂”不取码，显示为灰色。', en: 'More than four roots: take 1st, 2nd, 3rd and last. The 夂 in between is not coded, so it stays grey.' },
+  鼎: { zh: '典型的“难拆字”：目开头、乛结尾，取前三个和最后一个字根，中间三笔不取码。', en: 'A classic troublemaker: starts with 目, ends with 乛; take the first three roots and the last, leaving three strokes uncoded.' },
+  雨: { zh: '成字字根：报户口 F，再取首笔横 G、次笔竖 H、末笔点 Y。', en: 'A character root: its key F, then 1st stroke G, 2nd stroke H, last stroke Y.' },
+  国: { zh: '囗 + 王 + 丶，三个字根再补识别码：末笔点、杂合型 → 43 区位 → I。', en: '囗 + 王 + 丶, plus an ID code: last stroke dian, enclosed → 43 → I.' },
+};
+
+const features = [
+  { icon: 'eye', title: L('看懂每一笔', 'See every stroke'), body: L('田字格里每个字根一种颜色，悬停编码字母，对应笔画单独高亮。', 'Each root gets its own colour on the grid; hover a letter to light up exactly its strokes.'), link: q('鼎') },
+  { icon: 'terminal', title: L('输入编码查字', 'Look up by code'), body: L('打 etg 看候选，再看以它开头的全部四码词组；第 3、4 码可用 Z 万能键。', 'Type etg to see candidates and every 4-letter code that starts with it; Z works as a wildcard in slots 3–4.'), link: q('etg') },
+  { icon: 'zap', title: L('整句最省键打法', 'Fewest keystrokes'), body: L('动态规划把整句切成词库里的词，给出“只按空格”和“允许选重”两种最省键方案。', 'Dynamic programming splits a sentence into dictionary words — one plan with space-only commits, one that allows digit picks.'), link: q('今天吃什么') },
+  { icon: 'layers', title: L('字根键盘与口诀', 'Root keyboard & mnemonics'), body: L('五区按颜色排在键盘上，点一句“王旁青头戋五一”就能看到该键全部字根。', 'Five zones colour-coded on a keyboard; click a mnemonic line to see every root on that key.'), link: `${APP}/roots` },
+  { icon: 'book', title: L('易忘字复习卡', 'Review cards'), body: L('查询记录只存在浏览器本地；标成“易忘”的字会变成翻卡，先自己拆一遍再对答案。', 'History stays in localStorage; starred characters become flash cards — split it in your head, then flip.'), link: `${APP}/review` },
+  { icon: 'shield', title: L('纯前端，无广告', 'Static, no ads'), body: L('React + Vite，部署在 Cloudflare Pages。手机电脑都能用，不用注册。', 'React + Vite on Cloudflare Pages. Works on phone and desktop, no sign-up.'), link: APP },
+];
+
+const lexCode = `// Record layout: u16 len | u16 weight | u16 codeLen | 4 x u16 code | utf16le word | u16 0
+let p = 0xa8
+while (p + 2 <= b.length) {
+  const len = b.readUInt16LE(p)
+  if (len === 0) break
+  const weight = b.readUInt16LE(p + 2)
+  const codeLen = b.readUInt16LE(p + 4)
+  const code = b.toString('utf16le', p + 6, p + 6 + codeLen * 2)
+  const word = b.toString('utf16le', p + 14, p + len - 2)
+  lines.push(\`\${code}\\t\${word}\\t\${weight}\`)
+  p += len
+}`;
+
+const planCode = `// '' = auto commit, ' ' = space, '2'..'9' = pick
+function commitKey(code: string, rank: number, n: number) {
+  if (rank > 9) return null
+  if (code.length === 4 && n === 1) return ''
+  return rank === 1 ? ' ' : String(rank)
+}`;
+
+const plans = [
+  { title: L('推荐打法', 'Recommended'), sub: L('只用第一候选，不用记选重数字', 'First candidates only — nothing to memorise'), keys: 14, segs: [['wygd', '␣', '今天'], ['ktn', '␣', '吃'], ['wftc', '␣', '什么']] },
+  { title: L('优化打法', 'Optimised'), sub: L('允许数字选重，键数更少', 'Digit picks allowed — fewer keys'), keys: 10, segs: [['wygd', '␣', '今天'], ['kwtc', '4', '吃什么']] },
+];
+
+const pipeline = [
+  { n: fmtNumber(m.seg.source, lang), title: L('已标注的字', 'Hand-labelled'), body: L('search-wubi 里现成标好“哪几笔属于哪个字根”的字。', 'Characters in search-wubi that already map strokes to roots.') },
+  { n: L('学习', 'Learn'), title: L('字根 → 笔画序列', 'Root → stroke pattern'), body: L('统计每个字根通常由哪几种笔画（横竖撇点折）组成。', 'Learn which stroke-type sequences each root is usually made of.') },
+  { n: fmtNumber(m.seg.exact, lang), title: L('回溯严格匹配', 'Strict backtracking'), body: L('把字的笔画序列逐段匹配到字根上，多解时按统计打分。', 'Backtrack the stroke sequence onto the roots; score ties statistically.') },
+  { n: fmtNumber(m.seg.approx, lang), title: L('放宽 + 编辑距离', 'Loose + edit distance'), body: L('允许段内笔序调整，最后用编辑距离兜底，界面标注“自动推断”。', 'Allow reordering within a chunk, then fall back to edit distance — flagged as “inferred”.') },
+];
+
+const strokeKeys = (s: number[]) => s.join(',');
+---
+
+<Base
+  lang={lang}
+  title={L('五笔字根图解', 'Wubi 86 Root Viewer')}
+  description={L(
+    '五笔字根图解：输入一个字，看它拆成哪几个字根、每个字根对应哪几笔、最后一码是不是识别码。编码与候选顺序来自 Windows 自带微软五笔，支持编码查字、整句最省键打法、字根表口诀与复习卡。',
+    'Wubi 86 Root Viewer: type a character and see which roots it splits into, which strokes each root covers, and whether the last letter is an ID code. Codes and candidate order come straight from Microsoft Wubi on Windows.',
+  )}
+>
+  <section class="relative overflow-hidden">
+    <div class="grid-bg pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_top,black_25%,transparent_70%)]"></div>
+    <div class="pointer-events-none absolute -top-40 left-1/3 h-[480px] w-[760px] -translate-x-1/2 rounded-full bg-[#e0475b]/12 blur-[120px]"></div>
+
+    <div class="container-x relative grid items-center gap-12 pt-16 pb-16 sm:pt-24 lg:grid-cols-[1fr_1.05fr] lg:gap-14">
+      <div>
+        <div class="flex flex-wrap gap-2">
+          <span class="chip border-accent/40 text-accent">{L('新上线', 'New')} · 2026.10</span>
+          <span class="chip">React · TypeScript · Cloudflare Pages</span>
+        </div>
+        <h1 class="mt-6 text-4xl font-bold tracking-tight text-balance sm:text-5xl">
+          {L('哪个字忘了怎么拆，', 'Forgot how to split a character?')}
+          <span class="wb-gradient block">{L('查一下就知道', 'Look it up.')}</span>
+        </h1>
+        <p class="lead mt-6 max-w-xl">
+          {
+            L(
+              '86 版五笔用了很多年，偶尔还是会卡在「鼎」「凹」这种字上。大多数反查网站只给一个编码，我想知道的是为什么：拆成哪几个字根、每个字根是哪几笔、最后一码是不是识别码。',
+              'Years of typing Wubi 86, and characters like 鼎 still trip me up. Most lookup sites just give you a code — I wanted the why: which roots, which strokes each root covers, and whether the last letter is an ID code.',
+            )
+          }
+        </p>
+
+        <form action={APP + '/'} method="get" target="_blank" class="mt-8 flex max-w-lg overflow-hidden rounded-xl border border-line-strong bg-surface shadow-lg shadow-black/5 focus-within:border-brand">
+          <input
+            name="q"
+            required
+            maxlength="40"
+            autocomplete="off"
+            placeholder={L('输入汉字、词组或五笔编码…', 'Type a character, word or Wubi code…')}
+            aria-label={L('查询五笔拆分', 'Look up Wubi decomposition')}
+            class="min-w-0 flex-1 bg-transparent px-4 py-3 text-base outline-none placeholder:text-fg-mute"
+          />
+          <button type="submit" class="btn-brand m-1.5 rounded-lg">{L('查一下', 'Look up')} <Icon name="arrowUpRight" size={15} /></button>
+        </form>
+        <div class="mt-4 flex flex-wrap items-center gap-2 text-sm">
+          <span class="text-fg-mute">{L('试试：', 'Try:')}</span>
+          {
+            examples.map((e) => (
+              <a href={q(e)} target="_blank" rel="noopener" class="chip font-mono hover:border-brand/50 hover:text-fg">
+                {e}
+              </a>
+            ))
+          }
+        </div>
+
+        <div class="mt-9 flex flex-wrap gap-3">
+          <a href={APP} target="_blank" rel="noopener" class="btn-primary">{L('打开 wubi.sdcb.ai', 'Open wubi.sdcb.ai')} <Icon name="arrowUpRight" /></a>
+          <a href={REPO} target="_blank" rel="noopener" class="btn-ghost">
+            <Icon name="github" /> GitHub
+            {r && <span class="border-l border-line-strong pl-2 font-mono text-xs" data-repo-stars="wubi86-viewer">{fmtNumber(r.stars, 'en')}</span>}
+          </a>
+          <a href={BLOG} target="_blank" rel="noopener" class="btn-ghost"><Icon name="book" /> {L('开发手记', 'Blog post')}</a>
+        </div>
+      </div>
+
+      <!-- live split demo, rendered from real data -->
+      <div class="card relative overflow-hidden p-5 sm:p-7" data-wubi data-reveal>
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex gap-1.5" role="tablist" aria-label={L('选择示例字', 'Pick a character')}>
+            {
+              demo.chars.map((c, i) => (
+                <button
+                  type="button"
+                  role="tab"
+                  data-wubi-pick={i}
+                  aria-selected={i === 0 ? 'true' : 'false'}
+                  class="wb-pick grid size-10 place-items-center rounded-lg border border-line text-lg font-semibold text-fg-soft transition hover:border-line-strong hover:text-fg"
+                >
+                  {c.ch}
+                </button>
+              ))
+            }
+          </div>
+          <span class="hidden font-mono text-xs text-fg-mute sm:inline">{L('真实数据 · 来自 wubi.sdcb.ai', 'live data · wubi.sdcb.ai')}</span>
+        </div>
+
+        {
+          demo.chars.map((c, i) => (
+            <div data-wubi-panel={i} hidden={i !== 0} class="mt-5 grid gap-6 sm:grid-cols-[minmax(0,220px)_1fr]">
+              <div class="flex flex-col items-center gap-3">
+                <div class="wb-paper w-full max-w-[220px] rounded-xl p-1.5">
+                  <svg viewBox="0 0 1024 1024" class="block aspect-square w-full" role="img" aria-label={c.ch}>
+                    <rect x="8" y="8" width="1008" height="1008" rx="24" fill="none" stroke="var(--wb-grid)" stroke-width="8" />
+                    <g stroke="var(--wb-grid)" stroke-width="4" stroke-dasharray="18 16" opacity="0.75">
+                      <line x1="512" y1="12" x2="512" y2="1012" />
+                      <line x1="12" y1="512" x2="1012" y2="512" />
+                      <line x1="12" y1="12" x2="1012" y2="1012" opacity="0.5" />
+                      <line x1="1012" y1="12" x2="12" y2="1012" opacity="0.5" />
+                    </g>
+                    <g transform="translate(0, 900) scale(1, -1)">
+                      {c.strokes.map((d, s) => (
+                        <path d={d} data-stroke={s} data-color={c.strokeColor[s]} class="wb-stroke" style={`fill:var(--wb-${c.strokeColor[s] < 0 ? 'off' : c.strokeColor[s]})`} />
+                      ))}
+                    </g>
+                  </svg>
+                </div>
+                <div class="flex gap-2 text-sm">
+                  <button type="button" data-wubi-play="split" class="btn-ghost px-3 py-1.5 text-xs">▶ {L('拆解演示', 'Split demo')}</button>
+                  <button type="button" data-wubi-play="order" class="btn-ghost px-3 py-1.5 text-xs">✎ {L('笔顺', 'Stroke order')}</button>
+                </div>
+              </div>
+
+              <div class="min-w-0">
+                <div class="flex items-end gap-4">
+                  <span class="text-6xl leading-none font-semibold">{c.ch}</span>
+                  <div class="pb-1">
+                    <div class="text-sm whitespace-nowrap text-fg-mute">{c.py}</div>
+                    <div class="font-mono text-2xl font-bold tracking-[0.2em] uppercase">{c.full}</div>
+                  </div>
+                </div>
+
+                <div class="mt-5 grid max-w-[280px] grid-cols-4 gap-1.5">
+                  {c.parts.map((p) => (
+                    <button
+                      type="button"
+                      data-wubi-part
+                      data-strokes={strokeKeys(p.strokes)}
+                      data-color={p.color}
+                      class="wb-chip flex min-w-0 flex-col items-center gap-1 rounded-xl border-2 px-1 pt-2 pb-1.5 transition"
+                      style={`--c:var(--wb-${p.color})`}
+                    >
+                      {p.glyph ? (
+                        <svg viewBox="0 0 100 100" class="size-7" aria-hidden="true">
+                          <path d={p.glyph} fill="var(--c)" />
+                        </svg>
+                      ) : (
+                        <span class="grid size-7 place-items-center text-xs text-fg-mute">—</span>
+                      )}
+                      <span class="font-mono text-lg leading-none font-bold uppercase" style="color:var(--c)">
+                        {p.letter}
+                      </span>
+                      <span class="max-w-full truncate text-[10px] text-fg-mute">{lang === 'zh' ? p.zh : p.en}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <p class="mt-5 text-sm leading-relaxed text-fg-soft">{t(lang, notes[c.ch])}</p>
+
+                <div class="mt-4 flex flex-wrap gap-1.5">
+                  {c.codes.map(([code, rank]) => (
+                    <a href={q(String(code))} target="_blank" rel="noopener" class="chip font-mono hover:text-fg">
+                      {code}
+                      {Number(rank) > 1 && <span class="text-warn">#{rank}</span>}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+
+    <div class="container-x relative pb-10">
+      <dl class="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-4">
+        {
+          [
+            [fmtNumber(m.entries, lang), L('条微软五笔词库记录', 'Microsoft Wubi entries')],
+            [fmtNumber(m.chars, lang), L('个汉字可查', 'characters')],
+            [fmtNumber(m.strokes, lang), L('个字带田字格图解', 'with stroke diagrams')],
+            [fmtNumber(m.files, lang), L('个 JSON 分片，按需加载', 'JSON shards, loaded on demand')],
+          ].map(([v, k]) => (
+            <div class="bg-surface px-5 py-5">
+              <dt class="text-xs text-fg-mute">{k}</dt>
+              <dd class="mt-1 font-mono text-2xl font-bold">{v}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+  </section>
+
+  <!-- features -->
+  <section class="container-x pt-20">
+    <p class="eyebrow">{L('功能', 'Features')}</p>
+    <h2 class="h-section mt-3 max-w-2xl">{L('不只是反查一个编码', 'More than a code lookup')}</h2>
+    <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        features.map((f, i) => (
+          <a href={f.link} target="_blank" rel="noopener" class="card group flex flex-col p-6 hover:bg-surface-2/60" data-reveal style={`--delay:${(i % 3) * 70}ms`}>
+            <div class="flex items-center justify-between">
+              <span class="grid size-9 place-items-center rounded-lg bg-brand-soft text-brand">
+                <Icon name={f.icon as any} size={17} />
+              </span>
+              <Icon name="arrowUpRight" class="text-fg-mute transition group-hover:text-fg" />
+            </div>
+            <h3 class="mt-4 text-lg font-semibold">{f.title}</h3>
+            <p class="mt-2 text-sm leading-relaxed text-fg-soft">{f.body}</p>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- typing plan -->
+  <section class="container-x pt-24">
+    <div class="grid items-start gap-10 lg:grid-cols-[1fr_1.1fr]">
+      <div class="min-w-0">
+        <p class="eyebrow">{L('整句', 'Sentences')}</p>
+        <h2 class="h-section mt-3">{L('「今天吃什么」最少要按几下？', 'How few keys can “今天吃什么” take?')}</h2>
+        <p class="lead mt-4">
+          {
+            L(
+              '整句不在词库里，硬套造词规则推出来的编码根本打不出来。这里把句子切成词库里真实存在的词，每段代价 = 编码位数 + 上屏键，求总键数最少的切法。',
+              'Whole sentences aren’t in the dictionary, and a rule-derived code won’t type them. Instead the sentence is split into real dictionary entries; each chunk costs its code length plus the commit key, and DP finds the cheapest split.',
+            )
+          }
+        </p>
+        <CodeWindow code={planCode} lang="ts" title="src/lib/plan.ts" uiLang={lang} copy={false} class="mt-6" />
+      </div>
+
+      <div class="grid min-w-0 gap-4" data-reveal>
+        {
+          plans.map((p, i) => (
+            <div class:list={['card p-6', i === 1 && 'border-brand/40 bg-gradient-to-b from-brand-soft to-surface']}>
+              <div class="flex items-baseline justify-between gap-3">
+                <div>
+                  <h3 class="font-semibold">{p.title}</h3>
+                  <p class="text-xs text-fg-mute">{p.sub}</p>
+                </div>
+                <span class="font-mono text-3xl font-bold">
+                  {p.keys}
+                  <span class="ml-1 text-sm font-normal text-fg-mute">{L('键', 'keys')}</span>
+                </span>
+              </div>
+              <div class="mt-5 flex flex-wrap items-end gap-3">
+                {p.segs.map(([code, commit, text]) => (
+                  <div class="flex flex-col items-center gap-1.5">
+                    <span class="text-sm text-fg-soft">{text}</span>
+                    <span class="flex gap-1">
+                      {[...code].map((k) => (
+                        <kbd class="wb-key">{k}</kbd>
+                      ))}
+                      <kbd class:list={['wb-key', commit === '␣' ? 'w-10 text-fg-mute' : 'border-warn/60 text-warn']}>{commit}</kbd>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        }
+        <a href={q('今天吃什么')} target="_blank" rel="noopener" class="link inline-flex items-center gap-1 text-sm">{L('在 wubi.sdcb.ai 上看完整推导', 'See the full breakdown')} <Icon name="arrowUpRight" size={14} /></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- data source -->
+  <section class="container-x pt-24">
+    <div class="grid items-start gap-10 lg:grid-cols-[1.1fr_1fr]">
+      <CodeWindow code={lexCode} lang="js" title="scripts/extract-ms-lex.mjs" uiLang={lang} copy={false} class="order-2 min-w-0 lg:order-1" />
+      <div class="order-1 min-w-0 lg:order-2">
+        <p class="eyebrow">{L('数据', 'Data')}</p>
+        <h2 class="h-section mt-3">{L('和你电脑上的微软五笔一模一样', 'Identical to the IME on your PC')}</h2>
+        <p class="lead mt-4">
+          {
+            L(
+              '网上流传的 86 码表版本很多，简码、词组和候选顺序都不一致。这里的编码直接解析自 Windows 自带的 ChsWubiNew.lex：格式没有公开文档，但结构不复杂，一共 53 万多条，同一编码下按权重排序就是输入法里的候选顺序。',
+              'Wubi 86 tables floating around the web disagree on short codes, phrases and candidate order. These codes are parsed straight from ChsWubiNew.lex that ships with Windows — undocumented but simple: 530k+ records, and sorting by weight gives the exact candidate order.',
+            )
+          }
+        </p>
+        <p class="mt-4 text-sm text-fg-soft">
+          {L('所以网站上写着「第 2 候选，需按 2」，你在自己电脑上也是按 2。', 'So when the site says “2nd candidate, press 2”, that is exactly what you press.')}
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- stroke ↔ root alignment -->
+  <section class="container-x pt-24">
+    <p class="eyebrow">{L('算法', 'Algorithm')}</p>
+    <h2 class="h-section mt-3 max-w-3xl">{L('真正花功夫的：把笔画和字根对上', 'The hard part: matching strokes to roots')}</h2>
+    <p class="lead mt-4 max-w-3xl">
+      {
+        L(
+          '字根拆分来自我的另一个项目 search-wubi，笔画矢量来自 Make Me a Hanzi，但两者之间没有“第几笔属于哪个字根”的对应，现成标好的只有两千多个字。剩下的靠算法补齐：',
+          'Root splits come from my earlier search-wubi project and stroke vectors from Make Me a Hanzi — but nothing says which stroke belongs to which root, except for ~2,000 hand-labelled characters. An algorithm fills in the rest:',
+        )
+      }
+    </p>
+    <ol class="mt-10 grid gap-4 md:grid-cols-4">
+      {
+        pipeline.map((s, i) => (
+          <li class="card relative p-6" data-reveal style={`--delay:${i * 80}ms`}>
+            <span class="font-mono text-xs text-fg-mute">0{i + 1}</span>
+            <div class="mt-2 font-mono text-3xl font-bold" style={`color:var(--wb-${i})`}>{s.n}</div>
+            <h3 class="mt-3 font-semibold">{s.title}</h3>
+            <p class="mt-1.5 text-sm leading-relaxed text-fg-soft">{s.body}</p>
+          </li>
+        ))
+      }
+    </ol>
+    <div class="mt-6 overflow-hidden rounded-full border border-line bg-surface" title={`source ${m.seg.source} · exact ${m.seg.exact} · approx ${m.seg.approx}`}>
+      <div class="flex h-3">
+        <span style={`width:${(m.seg.source / segTotal) * 100}%;background:var(--wb-0)`}></span>
+        <span style={`width:${(m.seg.exact / segTotal) * 100}%;background:var(--wb-2)`}></span>
+        <span style={`width:${(m.seg.approx / segTotal) * 100}%;background:var(--wb-3)`}></span>
+      </div>
+    </div>
+    <p class="mt-3 text-sm text-fg-mute">
+      {
+        L(
+          `用已知答案的字做验证，约 95% 能完全对上；最终 ${fmtNumber(segTotal, lang)} 个字拿到了逐笔对应的田字格，常用字基本覆盖。`,
+          `Validated against the labelled set, ~95% match exactly. ${fmtNumber(segTotal, lang)} characters now have stroke-level diagrams, covering nearly all common ones.`,
+        )
+      }
+    </p>
+  </section>
+
+  <!-- writing + CTA -->
+  <section class="container-x pt-24 pb-24">
+    <div class="card relative overflow-hidden p-8 sm:p-12">
+      <div class="pointer-events-none absolute -top-24 -right-24 size-72 rounded-full bg-[#e0475b]/15 blur-3xl"></div>
+      <div class="relative grid gap-10 lg:grid-cols-[1.2fr_1fr]">
+        <div>
+          <h2 class="h-section">{L('下次忘了，查一下就行', 'Next time you forget, just look it up')}</h2>
+          <p class="lead mt-4">
+            {L('手机电脑都能用，不用注册，没有广告。项目以 AGPL-3.0 协议开源，发现拆错的字欢迎提 issue。', 'Works on phone and desktop, no sign-up, no ads. Open source under AGPL-3.0 — spot a wrong split? Open an issue.')}
+          </p>
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a href={APP} target="_blank" rel="noopener" class="btn-brand">wubi.sdcb.ai <Icon name="arrowUpRight" /></a>
+            <a href={REPO} target="_blank" rel="noopener" class="btn-ghost"><Icon name="github" /> sdcb/wubi86-viewer</a>
+          </div>
+        </div>
+        <div>
+          <p class="eyebrow">{L('相关文章', 'Related writing')}</p>
+          {
+            wubiPosts.length ? (
+              <div class="mt-1 divide-y divide-line">
+                {wubiPosts.map((p) => (
+                  <PostItem post={p} lang={lang} />
+                ))}
+              </div>
+            ) : (
+              <a href={BLOG} target="_blank" rel="noopener" class="group mt-3 block">
+                <span class="font-medium group-hover:text-brand">我做了个86五笔字根图解网站：哪个字忘了怎么拆，查一下就知道</span>
+                <span class="mt-1 block font-mono text-xs text-fg-mute">cnblogs · 2026-10-11</span>
+              </a>
+            )
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style is:global>
+  :root {
+    --wb-0: #e0475b;
+    --wb-1: #e08a1e;
+    --wb-2: #1f9d6b;
+    --wb-3: #2f6fdc;
+    --wb-4: #8b5cf6;
+    --wb-off: #c9c1b3;
+    --wb-grid: #d9a99c;
+    --wb-paper: #fffdf8;
+  }
+  [data-theme='dark'] {
+    --wb-0: #ff7a8a;
+    --wb-1: #ffb454;
+    --wb-2: #4fd6a0;
+    --wb-3: #6ea8ff;
+    --wb-4: #b79bff;
+    --wb-off: #4a4540;
+    --wb-grid: #6b3f37;
+    --wb-paper: rgb(0 0 0 / 0.25);
+  }
+  .wb-paper {
+    background: var(--wb-paper);
+    box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.08);
+  }
+  .wb-stroke {
+    transition:
+      fill 0.25s ease,
+      opacity 0.25s ease;
+  }
+  .wb-gradient {
+    background: linear-gradient(90deg, var(--wb-0), var(--wb-1) 35%, var(--wb-2) 65%, var(--wb-3));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .wb-pick[aria-selected='true'] {
+    border-color: var(--c-brand);
+    background: var(--c-brand-soft);
+    color: var(--c-fg);
+  }
+  .wb-chip {
+    border-color: color-mix(in srgb, var(--c) 55%, transparent);
+    background: color-mix(in srgb, var(--c) 8%, transparent);
+  }
+  .wb-chip:hover,
+  .wb-chip:focus-visible,
+  .wb-chip[data-active] {
+    background: color-mix(in srgb, var(--c) 20%, transparent);
+    transform: scale(1.05);
+  }
+  .wb-key {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.9rem;
+    height: 2.1rem;
+    padding: 0 0.4rem;
+    border: 1px solid var(--c-line-strong);
+    border-bottom-width: 3px;
+    border-radius: 0.45rem;
+    background: var(--c-surface);
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+</style>

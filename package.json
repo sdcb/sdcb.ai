@@ -9,6 +9,7 @@
   "scripts": {
     "fetch-data": "node scripts/fetch-data.ts",
     "build:ocr": "node scripts/build-ocr.ts",
+    "fetch-wubi": "node scripts/fetch-wubi.ts",
     "dev": "astro dev",
     "build": "astro build",
     "preview": "wrangler pages dev dist",

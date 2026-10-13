@@ -226,6 +226,18 @@ export const projects: Project[] = [
     tagline: { zh: '用 C# 模拟 N 体问题，看见天体运动的混沌之美。', en: 'N-body simulation in C# — the chaotic beauty of celestial motion.' },
   },
   {
+    repo: 'wubi86-viewer',
+    name: '五笔字根图解',
+    category: 'dev',
+    featured: true,
+    page: '/wubi',
+    tagline: {
+      zh: '86 五笔字根图解：输入一个字，田字格里按颜色标出每个字根对应的笔画；编码与候选顺序来自 Windows 自带微软五笔。',
+      en: 'Wubi 86 root viewer: type a character and see each root coloured stroke by stroke; codes and candidate order straight from Microsoft Wubi.',
+    },
+    tags: ['Wubi', 'React', 'Cloudflare Pages'],
+  },
+  {
     repo: 'sdmap',
     category: 'dev',
     tagline: {
