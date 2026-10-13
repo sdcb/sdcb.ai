@@ -1,0 +1,593 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import CodeWindow from '../components/CodeWindow.astro';
+import PostItem from '../components/PostItem.astro';
+import { href, t, fmtNumber, fmtDate, type Lang } from '../i18n';
+import { repo, release } from '../data/snapshot';
+import { posts } from '../data/writing';
+import { qqGroups } from '../data/community';
+import { quants, lanes, race } from '../data/hymt';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const L = (zh: string, en: string) => t(lang, { zh, en });
+
+const REPO = 'https://github.com/sdcb/HyMT2Sharp';
+const BLOG2 = 'https://www.cnblogs.com/sdcb/p/23279890/20261012-hymt2sharp-2';
+const BLOG1 = 'https://www.cnblogs.com/sdcb/p/22956801/20260913-hymt2sharp-intro';
+const r = repo('HyMT2Sharp');
+const rel = release('HyMT2Sharp');
+const hymtPosts = posts.filter((p) => /HyMT2Sharp/i.test(p.title)).slice(0, 4);
+const fallbackPosts = [
+  { title: 'HyMT2Sharp 2.0：纯 C# 的混元翻译，现在能跑在显卡上了', url: BLOG2, date: '2026-10-13' },
+  { title: 'HyMT2Sharp发布：一个纯C#、高度优化的本地翻译库', url: BLOG1, date: '2026-09-14' },
+];
+const dotnetQQ = qqGroups.find((g) => g.id === '495782587')!;
+const DEFAULT_Q = '2Bit';
+
+const install = `dotnet add package Sdcb.HyMT2Sharp
+dotnet add package Sdcb.GgufWeights.Hy-MT2-1.8B-2Bit`;
+
+const usage = (ns: string) => `using ${ns};
+using Sdcb.HyMT2Sharp.Backends;
+using Sdcb.HyMT2Sharp.Model;
+
+// Metal → Vulkan → CPU
+using HunyuanDenseModel model = new(Weights.Model(), backend: BackendFactory.Create());`;
+
+const raceData = JSON.stringify({
+  prompt: race.promptTokens,
+  output: race.outputTokens,
+  text: race.target,
+  quants: Object.fromEntries(quants.map((q) => [q.id, { vulkan: q.vulkan, cuda: q.cuda, cpu: q.cpu, llamaCpu: q.llamaCpu }])),
+});
+
+const k = (n: number) => (n >= 10000 ? `${(n / 1000).toFixed(1)}k` : fmtNumber(Math.round(n), 'en'));
+
+const gpuChain = [
+  { name: 'Metal', note: L('macOS · Apple Silicon', 'macOS · Apple Silicon'), num: L('M4 虚拟机 ~1,300 / ~70', 'M4 VM ~1,300 / ~70') },
+  { name: 'Vulkan', note: L('Windows · Linux · 需装驱动', 'Windows · Linux · needs a driver'), num: '3080 Ti 15.8k / 299' },
+  { name: 'CPU', note: L('都不可用时返回 null', 'returns null when neither is available'), num: L('见下一行', 'see below') },
+];
+const cpuChain = [
+  { name: 'AVX-512', note: 'Xeon 8559C', num: L('prefill 比 AVX2 快 ~23%', '~23% faster prefill than AVX2') },
+  { name: 'AVX-VNNI', note: 'vpdpbusd', num: L('Q8 内积走 VNNI', 'Q8 dot products via VNNI') },
+  { name: 'AVX2', note: 'Ryzen 7 5800X', num: '2Bit 489 / 47.5' },
+  { name: 'ARM64 SDOT', note: L('M4 虚拟机', 'M4 VM'), num: L('Q4 prefill 147.7，llama.cpp 84.6', 'Q4 prefill 147.7 vs llama.cpp 84.6') },
+  { name: 'Vector<T>', note: L('兜底', 'fallback'), num: L('BLIS 式 GEMM', 'BLIS-style GEMM') },
+];
+
+const subnormal = [
+  { label: 'Q6_K', before: 17.7, after: 30.0 },
+  { label: 'Q4_K_M', before: 26.4, after: 32.6 },
+  { label: '2Bit', before: 52.1, after: 63.5 },
+];
+const subMax = 63.5;
+
+const shots = [
+  {
+    src: '/hymt2sharp/winforms.png',
+    w: 1654,
+    h: 887,
+    title: 'WinForms',
+    body: L('引擎选"自动"，在 3080 Ti 上用 Vulkan：decode 60 个 token 用了 211 ms，约 284 tok/s。', 'Engine on "Auto" picks Vulkan on a 3080 Ti: 60 decode tokens in 211 ms, about 284 tok/s.'),
+  },
+  {
+    src: '/hymt2sharp/web.png',
+    w: 1716,
+    h: 981,
+    title: 'Server',
+    body: L('OpenAI 兼容的 /v1/chat/completions，带 SSE 流式和一个聊天页。', 'OpenAI-compatible /v1/chat/completions with SSE streaming and a chat page.'),
+  },
+  {
+    src: '/hymt2sharp/linqpad.png',
+    w: 2536,
+    h: 914,
+    title: 'LINQPad',
+    body: L('包里自带 hello-world、cli、minimal-api 三个脚本，引用后在 Samples 面板里就能看到。', 'The package ships hello-world, cli and minimal-api scripts — they show up in the Samples panel.'),
+    wide: true,
+  },
+];
+
+const upgrade = `# 1.x
+dotnet remove package Sdcb.HyMT2Sharp.Gguf
+dotnet remove package Sdcb.HyMT2Sharp.Kernels
+dotnet remove package Sdcb.HyMT2Sharp.Model
+# 2.0
+dotnet add package Sdcb.HyMT2Sharp`;
+---
+
+<Base
+  lang={lang}
+  title="HyMT2Sharp"
+  description={L(
+    'HyMT2Sharp 2.0：纯 C# 的腾讯混元翻译模型 Hy-MT2 推理库。CPU SIMD + Vulkan / Metal GPU，模型权重也在 NuGet 上，引用一个包就能离线翻译。',
+    'HyMT2Sharp 2.0: pure-C# inference for Tencent Hunyuan Hy-MT2 translation. CPU SIMD plus Vulkan / Metal GPU, weights on NuGet — one package for offline translation.',
+  )}
+>
+  <!-- HERO -->
+  <section class="relative overflow-hidden border-b border-line">
+    <div class="grid-bg pointer-events-none absolute inset-0 [mask-image:linear-gradient(to_bottom,black,transparent)]"></div>
+    <div class="pointer-events-none absolute -top-48 right-0 h-[500px] w-[700px] rounded-full bg-brand/10 blur-[120px]"></div>
+    <div class="container-x relative grid gap-12 py-20 sm:py-28 lg:grid-cols-[1.2fr_1fr] lg:items-end">
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="chip border-accent/40 text-accent">{L('2.0 已发布', '2.0 released')}</span>
+          {rel && <a href={rel.url} target="_blank" rel="noopener" class="chip hover:text-fg">latest {rel.tag} · {fmtDate(rel.publishedAt, lang)}</a>}
+          <span class="chip">100% C#</span>
+          <span class="chip">Apache-2.0</span>
+        </div>
+        <h1 class="mt-6 font-mono text-5xl font-bold tracking-tight sm:text-7xl">
+          HyMT2<span class="gradient-text">Sharp</span>
+        </h1>
+        <p class="mt-6 max-w-2xl text-xl leading-relaxed text-pretty text-fg-soft sm:text-2xl">
+          {
+            L(
+              '纯 C# 的混元翻译，现在能跑在显卡上了。不依赖 llama.cpp，引用一个 NuGet 包，连模型权重都带上。',
+              'Pure-C# Hunyuan translation, now on your GPU. No llama.cpp — reference one NuGet package and the weights come with it.',
+            )
+          }
+        </p>
+        <div class="mt-9 flex flex-wrap items-center gap-3">
+          <a href="#race" class="btn-brand"><Icon name="zap" /> {L('看翻译竞速', 'Watch the race')}</a>
+          <a href={REPO} target="_blank" rel="noopener" class="btn-ghost">
+            <Icon name="github" /> GitHub
+            <span class="border-l border-line-strong pl-2 font-mono text-xs text-fg-soft" data-repo-stars="HyMT2Sharp">{fmtNumber(r?.stars ?? 0, 'en')}</span>
+          </a>
+          <a href={BLOG2} target="_blank" rel="noopener" class="btn-ghost"><Icon name="book" /> {L('2.0 发布文章', '2.0 release post')}</a>
+        </div>
+      </div>
+      <div class="min-w-0">
+        <CodeWindow code={install} lang="powershell" title={L('安装', 'Install')} uiLang={lang} />
+        <p class="mt-3 font-mono text-xs text-fg-mute">
+          {L('第二行是 2Bit 模型权重（约 573 MB），也可以直接传 GGUF 文件路径。', 'Line two is the 2Bit weights (~573 MB). Passing a GGUF file path still works.')}
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- KEY FACTS -->
+  <section class="container-x mt-16">
+    <div class="grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4 [&>*]:bg-surface">
+      {
+        [
+          ['15.8k', L('tok/s prefill · RTX 3080 Ti Vulkan', 'tok/s prefill · RTX 3080 Ti Vulkan')],
+          ['+4–18%', L('prefill 对比同机 llama.cpp CUDA', 'prefill vs llama.cpp CUDA, same box')],
+          ['5 / 5', L('种腾讯官方量化在 CPU 和 GPU 上验证', 'official quants verified on CPU and GPU')],
+          ['116', L('个提交、31 个 PR，从 1.0 到 2.0', 'commits and 31 PRs from 1.0 to 2.0')],
+        ].map(([v, l]) => (
+          <div class="px-6 py-6">
+            <div class="font-mono text-3xl font-semibold tracking-tight">{v}</div>
+            <div class="mt-1 text-sm text-fg-mute">{l}</div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- RACE -->
+  <section id="race" class="container-x scroll-mt-20 pt-24">
+    <p class="eyebrow">{L('翻译竞速', 'Translation race')}</p>
+    <h2 class="h-section mt-3">{L('同一句话，四个引擎，按实测速度回放', 'One sentence, four engines, replayed at measured speed')}</h2>
+    <p class="lead mt-4 max-w-3xl">
+      {
+        L(
+          `每条赛道先按 prefill 速度吃掉 ${race.promptTokens} 个 prompt token，再按 decode 速度吐出 ${race.outputTokens} 个 token。速度取自 Ryzen 7 5800X + RTX 3080 Ti 上的 prefill 512 / decode 128 实测，不是在你的浏览器里跑模型。`,
+          `Each lane eats ${race.promptTokens} prompt tokens at its prefill speed, then emits ${race.outputTokens} tokens at its decode speed. Speeds are measured on a Ryzen 7 5800X + RTX 3080 Ti (prefill 512 / decode 128) — the model is not running in your browser.`,
+        )
+      }
+    </p>
+
+    <div class="mt-8 grid gap-5" data-hymt data-hymt-data={raceData}>
+      <div class="card min-w-0 p-5 sm:p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap gap-1.5" role="tablist" aria-label={L('量化', 'Quantization')}>
+            {
+              quants.map((q) => (
+                <button
+                  type="button"
+                  role="tab"
+                  data-hymt-q={q.id}
+                  aria-selected={q.id === DEFAULT_Q ? 'true' : 'false'}
+                  class="rounded-md border border-line px-3 py-1.5 font-mono text-xs text-fg-soft aria-selected:border-brand/50 aria-selected:bg-brand-soft aria-selected:text-brand"
+                >
+                  {q.label}
+                </button>
+              ))
+            }
+          </div>
+          <button type="button" class="btn-primary !py-1.5 text-sm" data-hymt-run>
+            <Icon name="zap" size={14} /> {L('重新开始', 'Restart')}
+          </button>
+        </div>
+
+        <div class="mt-4 rounded-lg border border-line bg-surface-2 px-4 py-3 text-xs leading-relaxed text-fg-mute">
+          <span class="font-mono text-[10px] tracking-wider text-fg-mute uppercase">prompt</span>
+          <p class="mt-1 text-fg-soft">{race.source}</p>
+        </div>
+
+        <div class="mt-4 grid gap-3 lg:grid-cols-2">
+          {
+            lanes.map((lane) => (
+              <div class:list={['rounded-lg border p-3.5', lane.ours ? 'border-brand/30 bg-brand-soft/40' : 'border-line bg-surface']} data-hymt-lane={lane.key}>
+                <div class="flex flex-wrap items-center justify-between gap-2 font-mono text-xs">
+                  <span class="flex items-center gap-2">
+                    <span class:list={['font-semibold', lane.ours ? 'text-brand' : 'text-fg']}>{lane.name}</span>
+                    <span class:list={['chip !py-0', lane.gpu && 'border-accent/40 text-accent']}>{lane.engine}</span>
+                    <span class="chip !py-0 border-ok/40 text-ok" data-hymt-rank hidden />
+                  </span>
+                  <span class="text-fg-mute tabular-nums" data-hymt-meta>—</span>
+                </div>
+                <div class="mt-2 h-1 overflow-hidden rounded-full bg-line">
+                  <div class="flex h-full">
+                    <div class="h-full bg-accent" style="width:0" data-hymt-pp />
+                    <div class:list={['h-full', lane.ours ? 'bg-brand' : 'bg-fg-mute']} style="width:0" data-hymt-tg />
+                  </div>
+                </div>
+                <div class="mt-2.5 grid text-sm leading-relaxed">
+                  <span class="invisible col-start-1 row-start-1" aria-hidden="true">{race.target}</span>
+                  <span class="col-start-1 row-start-1 text-fg" data-hymt-out />
+                  <span class="col-start-1 row-start-1 self-center text-center font-mono text-xs text-fg-mute" data-hymt-na hidden>
+                    {L('llama.cpp 加载不了这种量化（腾讯自有格式）', 'llama.cpp cannot load this quant (Tencent-specific format)')}
+                  </span>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+        <p class="mt-4 flex flex-wrap gap-4 font-mono text-[11px] text-fg-mute">
+          <span class="inline-flex items-center gap-1.5"><span class="h-1.5 w-4 rounded-sm bg-accent"></span>prefill</span>
+          <span class="inline-flex items-center gap-1.5"><span class="h-1.5 w-4 rounded-sm bg-brand"></span>decode</span>
+          <span>{L('Q4_K_M 起可以和 llama.cpp 正面对比——GPU decode 我们还慢一截。', 'Switch to Q4_K_M+ for a head-to-head — we still lose GPU decode.')}</span>
+        </p>
+      </div>
+
+      <div class="min-w-0">
+        {
+          quants.map((q) => (
+            <div data-hymt-panel={q.id} hidden={q.id !== DEFAULT_Q} class="grid min-w-0 gap-5 lg:grid-cols-[1fr_1.8fr]">
+              <div class="card p-5">
+                <div class="flex items-baseline justify-between gap-3">
+                  <h3 class="font-mono text-2xl font-bold">{q.label}</h3>
+                  <span class="font-mono text-xs text-fg-mute">{q.format}</span>
+                </div>
+                <dl class="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 font-mono text-xs">
+                  <div>
+                    <dt class="text-fg-mute">{L('权重大小', 'Weights')}</dt>
+                    <dd class="mt-0.5 text-lg font-semibold text-fg">{q.size}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-fg-mute">{L('NuGet 分片', 'NuGet parts')}</dt>
+                    <dd class="mt-0.5 text-lg font-semibold text-fg">{q.parts}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-fg-mute">Vulkan pp / tg</dt>
+                    <dd class="mt-0.5 text-fg">{k(q.vulkan!.pp)} / {q.vulkan!.tg}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-fg-mute">CPU pp / tg</dt>
+                    <dd class="mt-0.5 text-fg">{k(q.cpu!.pp)} / {q.cpu!.tg}</dd>
+                  </div>
+                </dl>
+                <p class="mt-4 text-xs leading-relaxed text-fg-mute">
+                  {
+                    q.cuda
+                      ? L(
+                          `对比 llama.cpp：CUDA prefill ${(q.vulkan!.pp / q.cuda.pp).toFixed(2)}×、decode ${(q.vulkan!.tg / q.cuda.tg).toFixed(2)}×；CPU prefill ${(q.cpu!.pp / q.llamaCpu!.pp).toFixed(2)}×。`,
+                          `vs llama.cpp: CUDA prefill ${(q.vulkan!.pp / q.cuda.pp).toFixed(2)}×, decode ${(q.vulkan!.tg / q.cuda.tg).toFixed(2)}×; CPU prefill ${(q.cpu!.pp / q.llamaCpu!.pp).toFixed(2)}×.`,
+                        )
+                      : L(
+                          '腾讯自有量化格式，llama.cpp 的 CPU 和 GPU 都加载不了，HyMT2Sharp 的 Vulkan 后端是目前唯一的 GPU 路径。',
+                          'A Tencent-specific format: llama.cpp loads it on neither CPU nor GPU, so HyMT2Sharp Vulkan is the only GPU path today.',
+                        )
+                  }
+                  {q.id === DEFAULT_Q && L(' 推荐：体积只比 Q4_K_M 的一半多一点，decode 最快。', ' Recommended: just over half the size of Q4_K_M, fastest decode.')}
+                </p>
+              </div>
+              <div class="grid min-w-0 content-start gap-5">
+                <CodeWindow code={`dotnet add package Sdcb.HyMT2Sharp\ndotnet add package ${q.pkg}`} lang="powershell" title="NuGet" uiLang={lang} />
+                <CodeWindow code={usage(q.ns)} title="Program.cs" uiLang={lang} />
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- DISPATCH -->
+  <section class="container-x pt-24">
+    <div class="grid gap-10 lg:grid-cols-[1fr_1.6fr]">
+      <div>
+        <p class="eyebrow">{L('后端', 'Backends')}</p>
+        <h2 class="h-section mt-3">{L('自动选最快的后端', 'The fastest backend, picked for you')}</h2>
+        <p class="lead mt-4">
+          {
+            L(
+              'BackendFactory.Create() 按 Metal → Vulkan → CPU 自动选择；也可以传 "cpu" / "vulkan" / "metal"，或设环境变量 HYMT_BACKEND。CPU 内核再按指令集逐级降级。',
+              'BackendFactory.Create() tries Metal → Vulkan → CPU; pass "cpu" / "vulkan" / "metal" or set HYMT_BACKEND to force one. CPU kernels then step down by instruction set.',
+            )
+          }
+        </p>
+        <p class="mt-4 text-sm leading-relaxed text-fg-soft">
+          {
+            L(
+              'Vulkan / Metal 的互操作、调度、内存管理全部用 C# 写，仓库语言统计仍是 100% C#。',
+              'Vulkan / Metal interop, scheduling and memory management are all C# — the repo is still 100% C#.',
+            )
+          }
+        </p>
+      </div>
+      <div class="card grid gap-6 p-6 font-mono text-xs" data-reveal>
+        {
+          [
+            { title: 'GPU', chain: gpuChain, gpu: true },
+            { title: 'CPU', chain: cpuChain, gpu: false },
+          ].map((row) => (
+            <div>
+              <div class="mb-2 text-fg-mute">{row.title}</div>
+              <ol class="flex flex-wrap items-stretch gap-y-2">
+                {row.chain.map((n, i) => (
+                  <li class="flex items-center">
+                    {i > 0 && <Icon name="arrowRight" size={14} class="mx-1.5 shrink-0 text-fg-mute" />}
+                    <div class:list={['rounded-lg border px-3 py-2', row.gpu && n.name !== 'CPU' ? 'border-accent/40 bg-accent/10' : 'border-line bg-surface-2']}>
+                      <div class:list={['font-semibold', row.gpu && n.name !== 'CPU' ? 'text-accent' : 'text-fg']}>{n.name}</div>
+                      <div class="mt-0.5 text-[10px] text-fg-mute">{n.note}</div>
+                      <div class="mt-1 text-[10px] text-fg-soft">{n.num}</div>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ))
+        }
+        <p class="text-[11px] leading-relaxed text-fg-mute">
+          {
+            L(
+              'Intel Arc B580：2Bit 11,039 / 243 tok/s；Q4_K_M 10,620 / 208，同卡 llama.cpp Vulkan 7,345 / 194。AMD RDNA 有默认 tile 调优。',
+              'Intel Arc B580: 2Bit 11,039 / 243 tok/s; Q4_K_M 10,620 / 208 vs llama.cpp Vulkan 7,345 / 194 on the same card. AMD RDNA gets default tile tuning.',
+            )
+          }
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SUBNORMAL -->
+  <section class="container-x pt-24">
+    <div class="grid gap-10 lg:grid-cols-2">
+      <div>
+        <p class="eyebrow">{L('一个值得单独说的修复', 'One fix worth its own section')}</p>
+        <h2 class="h-section mt-3">{L('966,544 个块里，966,543 个是次正规数', '966,543 of 966,544 blocks are subnormal')}</h2>
+        <div class="mt-6 space-y-4 leading-relaxed text-fg-soft">
+          <p>
+            {
+              L(
+                'GGUF 量化块里的 d / dmin 缩放因子是 fp16，而真实权重里这些值几乎全是 fp16 的次正规数。旧的 fp16 → fp32 写法中间会产生 fp32 次正规数，每次转换都触发约 150 个周期的微码辅助。',
+                'The d / dmin scales in GGUF blocks are fp16, and in real weights they are almost all fp16 subnormals. The old fp16 → fp32 path produced an fp32 subnormal on the way, paying ~150 cycles of microcode assist per conversion.',
+              )
+            }
+          </p>
+          <p>
+            {
+              L(
+                '随机字节造的合成权重几乎不会落进次正规区间，所以微基准一直看不出来。改成在整数尾数上计算后结果逐位一致。',
+                'Random synthetic weights almost never land in the subnormal range, so micro-benchmarks never showed it. Computing on the integer mantissa gives bit-identical results.',
+              )
+            }
+          </p>
+        </div>
+      </div>
+      <div class="card p-6" data-reveal>
+        <h3 class="text-sm font-medium">{L('decode · Xeon Platinum 8559C', 'decode · Xeon Platinum 8559C')}</h3>
+        <p class="mt-1 mb-5 text-xs text-fg-mute">tok/s · {L('越长越好', 'longer is better')}</p>
+        <div class="mb-4 flex gap-4 font-mono text-[11px] text-fg-mute">
+          <span class="inline-flex items-center gap-1.5"><span class="h-2 w-4 rounded-sm bg-fg-mute/35"></span>{L('修复前', 'before')}</span>
+          <span class="inline-flex items-center gap-1.5"><span class="h-2 w-4 rounded-sm bg-brand"></span>{L('修复后', 'after')}</span>
+        </div>
+        <div class="grid gap-4">
+          {
+            subnormal.map((s) => (
+              <div class="grid gap-1.5">
+                <div class="flex items-baseline justify-between font-mono text-xs">
+                  <span class="text-fg-soft">{s.label}</span>
+                  <span class="text-ok tabular-nums">+{Math.round((s.after / s.before - 1) * 100)}%</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="h-2 rounded-sm bg-fg-mute/35" style={`width:${((s.before / subMax) * 85).toFixed(1)}%`} />
+                  <span class="font-mono text-[11px] text-fg-mute tabular-nums">{s.before}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="h-2 rounded-sm bg-brand" style={`width:${((s.after / subMax) * 85).toFixed(1)}%`} />
+                  <span class="font-mono text-[11px] text-fg tabular-nums">{s.after.toFixed(1)}</span>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SAMPLES -->
+  <section class="container-x pt-24">
+    <p class="eyebrow">{L('示例', 'Samples')}</p>
+    <h2 class="h-section mt-3">{L('CLI、Server、WinForms、LINQPad，都默认 2Bit + 自动 GPU', 'CLI, Server, WinForms, LINQPad — 2Bit and auto GPU by default')}</h2>
+    <div class="mt-8 grid gap-5 lg:grid-cols-2">
+      {
+        shots.map((s, i) => (
+          <figure class:list={['card overflow-hidden', s.wide && 'lg:col-span-2']} data-reveal style={`--delay:${i * 80}ms`}>
+            <a href={s.src} target="_blank" rel="noopener" class="block border-b border-line bg-surface-2">
+              <img src={s.src} width={s.w} height={s.h} alt={s.title} loading="lazy" class="h-auto w-full" />
+            </a>
+            <figcaption class="p-5">
+              <div class="font-mono text-sm font-semibold">{s.title}</div>
+              <p class="mt-1 text-sm text-fg-soft">{s.body}</p>
+            </figcaption>
+          </figure>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- PITFALLS -->
+  <section class="container-x pt-24">
+    <p class="eyebrow">{L('两个坑', 'Two pitfalls')}</p>
+    <h2 class="h-section mt-3">{L('写示例时踩到的', 'Found while writing the samples')}</h2>
+    <div class="mt-8 grid gap-5 lg:grid-cols-2">
+      <article class="card p-6" data-reveal>
+        <h3 class="font-semibold">{L('流式输出里冒出 �', 'A stray � in streaming output')}</h3>
+        <p class="mt-2 text-sm leading-relaxed text-fg-soft">
+          {
+            L(
+              '2Bit 模型更爱把一个多字节字符拆成几个 byte token。第一个 token 单独解码只有半个 UTF-8 序列，于是流里先冒出 �，最后结果却是对的。',
+              'The 2Bit model likes to split one multi-byte character into several byte tokens. Decoding the first one alone yields half a UTF-8 sequence, so a � flashes in the stream even though the final text is right.',
+            )
+          }
+        </p>
+        <div class="mt-5 grid grid-cols-[auto_1fr_1fr] items-center gap-x-4 gap-y-2 font-mono text-xs">
+          <span class="text-fg-mute">token</span>
+          <span class="text-fg-mute">{L('修复前', 'before')}</span>
+          <span class="text-fg-mute">{L('修复后', 'after')}</span>
+          <span class="rounded border border-line bg-surface-2 px-2 py-1">E3 81</span>
+          <span>…ご<b class="text-rose-500">�</b></span>
+          <span class="text-fg-mute">…ご <span class="opacity-60">{L('（扣住）', '(held)')}</span></span>
+          <span class="rounded border border-line bg-surface-2 px-2 py-1">96</span>
+          <span>…ご<b class="text-fg">ざ</b></span>
+          <span>…ご<b class="text-ok">ざ</b></span>
+        </div>
+        <div class="mt-5">
+          <CodeWindow code={`string next = model.Tokenizer\n    .DecodeVisible(generated)\n    .TrimEnd('\\uFFFD');`} title="Generate" uiLang={lang} copy={false} />
+        </div>
+      </article>
+
+      <article class="card p-6" data-reveal style="--delay:80ms">
+        <h3 class="font-semibold">{L('NVIDIA 上 Vulkan 不还显存', 'Vulkan on NVIDIA does not give VRAM back')}</h3>
+        <p class="mt-2 text-sm leading-relaxed text-fg-soft">
+          {
+            L(
+              '原来的 Dispose 只调 vkDestroyDevice，以为会顺带回收设备名下的资源。NVIDIA 驱动并不会，每次重新加载漏约 4.3 GB。现在 buffer、pipeline、shader module、fence、descriptor pool、command pool 全部单独跟踪、逐个释放。',
+              'Dispose only called vkDestroyDevice, assuming it would reclaim everything the device owned. The NVIDIA driver does not — each reload leaked ~4.3 GB. Buffers, pipelines, shader modules, fences, descriptor and command pools are now tracked and freed one by one.',
+            )
+          }
+        </p>
+        <div class="mt-5 grid grid-cols-[auto_1fr] items-end gap-x-4 gap-y-3 font-mono text-[11px] text-fg-mute">
+          {
+            [
+              { label: L('修复前', 'before'), bars: [4.3, 8.6, 12.9], oom: true },
+              { label: L('修复后', 'after'), bars: [4.3, 4.3, 4.3, 4.3, 4.3, 4.3], oom: false },
+            ].map((row) => (
+              <>
+                <span class="self-center">{row.label}</span>
+                <div class="flex h-16 items-end gap-1.5 border-t border-b border-t-rose-500/50 border-b-line-strong border-dashed [border-bottom-style:solid]">
+                  {row.bars.map((v) => (
+                    <div
+                      class:list={['w-6 rounded-t-sm', v > 12 ? 'bg-rose-500' : row.oom ? 'bg-warn' : 'bg-ok']}
+                      style={`height:${Math.min(100, (v / 12) * 100).toFixed(0)}%`}
+                      title={`${v} GB`}
+                    />
+                  ))}
+                  {row.oom && <span class="ml-1 self-start text-rose-500">ErrorOutOfDeviceMemory</span>}
+                </div>
+              </>
+            ))
+          }
+          <span></span>
+          <span>{L('每根柱子是一次重新加载，虚线 = 3080 Ti 的 12 GB', 'One bar per reload; dashed line = 12 GB on a 3080 Ti')}</span>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- UPGRADE + LIMITS -->
+  <section class="container-x pt-24">
+    <div class="grid gap-10 lg:grid-cols-2">
+      <div class="min-w-0">
+        <p class="eyebrow">{L('从 1.0 升级', 'Upgrading from 1.0')}</p>
+        <h2 class="h-section mt-3">{L('三个包合成一个', 'Three packages became one')}</h2>
+        <p class="lead mt-4">
+          {
+            L(
+              '命名空间还是 Sdcb.HyMT2Sharp.Model，new HunyuanDenseModel(path) 和 Forward 的用法没变；不传 backend 时行为与 1.0 一样。',
+              'The namespace is still Sdcb.HyMT2Sharp.Model; new HunyuanDenseModel(path) and Forward are unchanged, and omitting backend behaves exactly like 1.0.',
+            )
+          }
+        </p>
+        <div class="mt-6">
+          <CodeWindow code={upgrade} lang="powershell" title={L('升级', 'Upgrade')} uiLang={lang} />
+        </div>
+        <ul class="mt-6 space-y-2.5 text-sm text-fg-soft">
+          <li class="flex gap-2.5"><Icon name="check" class="mt-0.5 shrink-0 text-ok" />{L('KvCacheConfig：None / Memory / BlockPolicy（前缀块池）', 'KvCacheConfig: None / Memory / BlockPolicy (prefix block pool)')}</li>
+          <li class="flex gap-2.5"><Icon name="check" class="mt-0.5 shrink-0 text-ok" />{L('KV cache 改为 bf16，内存减半；prefill 分块', 'bf16 KV cache (half the memory); chunked prefill')}</li>
+          <li class="flex gap-2.5"><Icon name="check" class="mt-0.5 shrink-0 text-ok" />{L('Sampler：temperature / top-k / top-p / min-p / 重复惩罚', 'Sampler: temperature / top-k / top-p / min-p / repetition penalty')}</li>
+          <li class="flex gap-2.5"><Icon name="check" class="mt-0.5 shrink-0 text-ok" />{L('可从任意可 seek 的 Stream 加载 GGUF', 'Load GGUF from any seekable Stream')}</li>
+        </ul>
+      </div>
+      <div class="min-w-0">
+        <p class="eyebrow">{L('已知限制', 'Known limitations')}</p>
+        <h2 class="h-section mt-3">{L('还没做好的地方', 'Not there yet')}</h2>
+        <ul class="mt-6 grid gap-3">
+          {
+            [
+              L('Vulkan decode 比 llama.cpp CUDA 慢 6%~18%，CUDA 的 int8 点积 GEMV 更贴带宽上限。', 'Vulkan decode is 6–18% slower than llama.cpp CUDA, whose int8 dot-product GEMV sits closer to the bandwidth limit.'),
+              L('GPU 加载时额外解一份 fp16 权重给 prefill 用，3080 Ti 上一个实例约 4.3 GB 显存。', 'GPU load keeps an extra fp16 copy for prefill GEMM — about 4.3 GB VRAM per instance on a 3080 Ti.'),
+              L('Metal 只在 M4 虚拟机上测过，真机应该更好。', 'Metal is only measured in an M4 VM; real hardware should do better.'),
+              L('HunyuanDenseModel 不是线程安全的，并发请求请排队或各开一个实例。', 'HunyuanDenseModel is not thread-safe — queue requests or use one instance each.'),
+            ].map((text) => (
+              <li class="flex gap-3 rounded-lg border border-line bg-surface px-4 py-3 text-sm text-fg-soft">
+                <span class="mt-1.5 size-1.5 shrink-0 rounded-full bg-warn" />
+                {text}
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA + POSTS -->
+  <section class="container-x pt-24">
+    <div class="card grid gap-10 p-8 sm:p-10 lg:grid-cols-[1.2fr_1fr]">
+      <div>
+        <h2 class="h-section">{L('离线翻译，一个包就够', 'Offline translation in one package')}</h2>
+        <p class="lead mt-4">
+          {
+            L(
+              `Apache-2.0 开源，觉得有用欢迎点个 Star。交流可加 QQ 群 ${dotnetQQ.id}（.NET骚操作）。`,
+              `Open source under Apache-2.0 — a star is always appreciated. Chat with us in QQ group ${dotnetQQ.id} (.NET骚操作).`,
+            )
+          }
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href={REPO} target="_blank" rel="noopener" class="btn-brand"><Icon name="github" /> sdcb/HyMT2Sharp</a>
+          <a href="https://www.nuget.org/packages/Sdcb.HyMT2Sharp" target="_blank" rel="noopener" class="btn-ghost">NuGet</a>
+          <a href={href(lang, '/community')} class="btn-ghost"><Icon name="users" /> {L('社区', 'Community')}</a>
+        </div>
+      </div>
+      <div>
+        <p class="eyebrow">{L('相关文章', 'Related writing')}</p>
+        {
+          hymtPosts.length >= 2 ? (
+            <div class="mt-1 divide-y divide-line">
+              {hymtPosts.map((p) => (
+                <PostItem post={p} lang={lang} />
+              ))}
+            </div>
+          ) : (
+            <div class="mt-1 divide-y divide-line">
+              {fallbackPosts.map((p) => (
+                <a href={p.url} target="_blank" rel="noopener" class="group block py-3">
+                  <span class="font-medium group-hover:text-brand">{p.title}</span>
+                  <span class="mt-1 block font-mono text-xs text-fg-mute">cnblogs · {p.date}</span>
+                </a>
+              ))}
+            </div>
+          )
+        }
+      </div>
+    </div>
+  </section>
+</Base>

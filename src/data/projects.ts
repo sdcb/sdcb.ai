@@ -90,11 +90,13 @@ export const projects: Project[] = [
   {
     repo: 'HyMT2Sharp',
     category: 'inference',
+    featured: true,
+    page: '/hymt2sharp',
     tagline: {
-      zh: '纯 C# 的腾讯混元翻译大模型 Hy-MT2 CPU 推理实现，不依赖 llama.cpp，本地离线翻译。',
-      en: 'Pure-C# CPU inference for Tencent Hunyuan MT2 translation model — no llama.cpp, fully offline.',
+      zh: '纯 C# 的腾讯混元翻译模型 Hy-MT2 推理库，不依赖 llama.cpp；CPU SIMD 之外，2.0 加上 Vulkan / Metal GPU，模型权重也在 NuGet 上。',
+      en: 'Pure-C# inference for Tencent Hunyuan Hy-MT2 translation — no llama.cpp. 2.0 adds Vulkan / Metal GPU on top of CPU SIMD, with weights shipped on NuGet.',
     },
-    tags: ['LLM', 'Translation', 'GGUF'],
+    tags: ['LLM', 'Translation', 'GGUF', 'Vulkan', 'Metal'],
     nuget: ['Sdcb.HyMT2Sharp'],
   },
   {

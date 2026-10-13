@@ -129,7 +129,7 @@ const evolution = [
   <!-- NOW -->
   <section class="container-x pt-24">
     <p class="eyebrow">{L('最近在忙', 'Now')}</p>
-    <h2 class="h-section mt-3">{L('一件刚发布，一件在途中', 'One just shipped, one in flight')}</h2>
+    <h2 class="h-section mt-3">{L('刚发布的，和在途中的', 'Just shipped, and in flight')}</h2>
 
     <div class="mt-10 grid gap-5 lg:grid-cols-[1.35fr_1fr]">
       <article class="card relative overflow-hidden p-7 sm:p-9" data-reveal>
@@ -207,6 +207,20 @@ const evolution = [
             </div>
             <p class="mt-1.5 text-sm text-fg-soft">
               {L('哪个字忘了怎么拆，查一下就知道：字根、笔画、识别码一目了然。', 'Forgot how to split a character? See its roots, strokes and ID code at a glance.')}
+            </p>
+          </div>
+          <Icon name="arrowRight" class="shrink-0 text-fg-mute transition-transform group-hover:translate-x-0.5 group-hover:text-fg" />
+        </a>
+
+        <a href={href(lang, '/hymt2sharp')} class="card group flex items-center gap-5 p-6" data-reveal style="--delay:240ms">
+          <span class="grid size-14 shrink-0 place-items-center rounded-xl bg-[#2f6fdc] text-3xl font-semibold text-white shadow-lg shadow-[#2f6fdc]/30">译</span>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="chip border-accent/40 text-accent">{L('2.0 新发布', '2.0 new')}</span>
+              <h3 class="font-mono font-semibold">HyMT2Sharp</h3>
+            </div>
+            <p class="mt-1.5 text-sm text-fg-soft">
+              {L('纯 C# 的混元翻译跑上了显卡：3080 Ti 上 prefill 1.58 万 tok/s，权重也在 NuGet 上。', 'Pure-C# Hunyuan translation on the GPU: 15.8k tok/s prefill on a 3080 Ti, weights on NuGet.')}
             </p>
           </div>
           <Icon name="arrowRight" class="shrink-0 text-fg-mute transition-transform group-hover:translate-x-0.5 group-hover:text-fg" />

@@ -169,6 +169,95 @@ document.querySelectorAll<HTMLElement>('[data-wubi]').forEach((root) => {
   }
 });
 
+// HyMT2Sharp translation race (/hymt2sharp)
+document.querySelectorAll<HTMLElement>('[data-hymt]').forEach((root) => {
+  type Speed = { pp: number; tg: number } | null;
+  const data: { prompt: number; output: number; text: string; quants: Record<string, Record<string, Speed>> } = JSON.parse(root.dataset.hymtData!);
+  const chars = Array.from(data.text);
+  const chunks = Array.from({ length: data.output }, (_, i) =>
+    chars.slice(Math.floor((i * chars.length) / data.output), Math.floor(((i + 1) * chars.length) / data.output)).join(''),
+  );
+  const tabs = root.querySelectorAll<HTMLButtonElement>('[data-hymt-q]');
+  const panels = root.querySelectorAll<HTMLElement>('[data-hymt-panel]');
+  const laneEls = [...root.querySelectorAll<HTMLElement>('[data-hymt-lane]')];
+  let quant = [...tabs].find((t) => t.getAttribute('aria-selected') === 'true')!.dataset.hymtQ!;
+  let raf = 0;
+  let started = false;
+
+  const q = (lane: HTMLElement, sel: string) => lane.querySelector<HTMLElement>(sel)!;
+  const run = () => {
+    cancelAnimationFrame(raf);
+    started = true;
+    const speeds = data.quants[quant];
+    const lanes = laneEls.map((el) => {
+      const s = speeds[el.dataset.hymtLane!];
+      q(el, '[data-hymt-na]').hidden = !!s;
+      q(el, '[data-hymt-rank]').hidden = true;
+      q(el, '[data-hymt-out]').textContent = '';
+      q(el, '[data-hymt-pp]').style.width = '0';
+      q(el, '[data-hymt-tg]').style.width = '0';
+      q(el, '[data-hymt-meta]').textContent = s ? '0 ms' : '—';
+      el.style.opacity = s ? '' : '0.55';
+      return { el, s, ppMs: s ? (data.prompt / s.pp) * 1000 : 0, done: !s, shown: -1 };
+    });
+    let rank = 0;
+    const t0 = performance.now();
+    const tick = (now: number) => {
+      const t = now - t0;
+      for (const l of lanes) {
+        if (l.done || !l.s) continue;
+        const ppFrac = Math.min(1, t / l.ppMs);
+        const n = t < l.ppMs ? 0 : Math.min(data.output, Math.floor(((t - l.ppMs) / 1000) * l.s.tg));
+        // prefill gets 20% of the bar so it stays visible even when it takes 5 ms
+        q(l.el, '[data-hymt-pp]').style.width = `${ppFrac * 20}%`;
+        q(l.el, '[data-hymt-tg]').style.width = `${(n / data.output) * 80}%`;
+        if (n !== l.shown) {
+          l.shown = n;
+          q(l.el, '[data-hymt-out]').textContent = chunks.slice(0, n).join('');
+        }
+        if (n >= data.output) {
+          l.done = true;
+          const total = l.ppMs + (data.output / l.s.tg) * 1000;
+          q(l.el, '[data-hymt-meta]').textContent = `${Math.round(total).toLocaleString('en')} ms · ${l.s.tg} tok/s`;
+          const badge = q(l.el, '[data-hymt-rank]');
+          badge.textContent = `#${++rank}`;
+          badge.hidden = false;
+        } else {
+          q(l.el, '[data-hymt-meta]').textContent = `${Math.round(t).toLocaleString('en')} ms`;
+        }
+      }
+      if (lanes.some((l) => !l.done)) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+  };
+
+  tabs.forEach((tab) =>
+    tab.addEventListener('click', () => {
+      quant = tab.dataset.hymtQ!;
+      tabs.forEach((x) => x.setAttribute('aria-selected', String(x === tab)));
+      panels.forEach((p) => (p.hidden = p.dataset.hymtPanel !== quant));
+      run();
+    }),
+  );
+  root.querySelector('[data-hymt-run]')?.addEventListener('click', run);
+
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  new IntersectionObserver(
+    (entries, io) => {
+      if (started || !entries.some((e) => e.isIntersecting)) return;
+      io.disconnect();
+      if (reduced) {
+        laneEls.forEach((el) => {
+          const s = data.quants[quant][el.dataset.hymtLane!];
+          q(el, '[data-hymt-na]').hidden = !!s;
+          if (s) q(el, '[data-hymt-out]').textContent = data.text;
+        });
+      } else window.setTimeout(run, 300);
+    },
+    { threshold: 0.3 },
+  ).observe(root);
+});
+
 // reveal on scroll
 const reveal = new IntersectionObserver(
   (entries) => {
