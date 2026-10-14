@@ -1,7 +1,7 @@
 {
   "extends": "astro/tsconfigs/strict",
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist", "ocr-wasm", "functions", "public"],
+  "exclude": ["dist", "ocr-wasm", "gcdr-wasm", "functions", "public"],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {

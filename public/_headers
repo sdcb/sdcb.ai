@@ -8,3 +8,24 @@
 
 /ocr/*
   Cache-Control: no-cache
+
+/gcdr/*
+  Cache-Control: no-cache
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+
+/simdgcdrnet/playground
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+
+/simdgcdrnet/playground/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+
+/en/simdgcdrnet/playground
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+
+/en/simdgcdrnet/playground/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp

@@ -12,7 +12,7 @@ const GH_USER = 'sdcb';
 const NUGET_OWNER = 'sdflysha';
 const DOCKER_NS = 'sdcb';
 const CNBLOGS = 'sdcb';
-const RELEASE_REPOS = ['SimdPaddleOCR', 'chats', 'PaddleSharp', 'OpenVINO.NET', 'HyMT2Sharp', 'Sdcb.FFmpeg'];
+const RELEASE_REPOS = ['SimdPaddleOCR', 'SimdGcdrNet', 'chats', 'PaddleSharp', 'OpenVINO.NET', 'HyMT2Sharp', 'Sdcb.FFmpeg'];
 const HISTORY_REPOS = ['chats', 'SimdPaddleOCR'];
 
 type Repo = {

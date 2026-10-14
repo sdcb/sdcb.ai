@@ -8,7 +8,8 @@
   },
   "scripts": {
     "fetch-data": "node scripts/fetch-data.ts",
-    "build:ocr": "node scripts/build-ocr.ts",
+    "build:ocr": "node scripts/build-wasm.ts ocr",
+    "build:gcdr": "node scripts/build-wasm.ts gcdr",
     "fetch-wubi": "node scripts/fetch-wubi.ts",
     "dev": "astro dev",
     "build": "astro build",

@@ -35,12 +35,28 @@ jobs:
           node-version: 24
           cache: npm
 
+      - name: Cache OCR wasm build
+        id: ocr-cache
+        uses: actions/cache@v4
+        with:
+          path: public/ocr/_framework
+          key: wasm-v1-ocr-${{ runner.os }}-${{ hashFiles('ocr-wasm/*.csproj', 'ocr-wasm/*.cs', 'ocr-wasm/global.json', 'ocr-wasm/nuget.config', 'scripts/build-wasm.ts') }}
+
+      - name: Cache GCDR wasm build
+        id: gcdr-cache
+        uses: actions/cache@v4
+        with:
+          path: public/gcdr/_framework
+          key: wasm-v1-gcdr-${{ runner.os }}-${{ hashFiles('gcdr-wasm/*.csproj', 'gcdr-wasm/*.cs', 'gcdr-wasm/global.json', 'gcdr-wasm/nuget.config', 'scripts/build-wasm.ts') }}
+
       - name: Setup .NET
+        if: steps.ocr-cache.outputs.cache-hit != 'true' || steps.gcdr-cache.outputs.cache-hit != 'true'
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
 
       - name: Install wasm-tools workload
+        if: steps.ocr-cache.outputs.cache-hit != 'true' || steps.gcdr-cache.outputs.cache-hit != 'true'
         run: dotnet workload install wasm-tools
 
       - name: Install dependencies
@@ -52,7 +68,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build OCR WebAssembly playground
+        if: steps.ocr-cache.outputs.cache-hit != 'true'
         run: npm run build:ocr
+
+      - name: Build GCDR WebAssembly playground
+        if: steps.gcdr-cache.outputs.cache-hit != 'true'
+        run: npm run build:gcdr
 
       - name: Build site
         run: npm run build

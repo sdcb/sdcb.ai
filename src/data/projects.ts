@@ -66,6 +66,18 @@ export const projects: Project[] = [
     nuget: ['Sdcb.SimdPaddleOCR'],
   },
   {
+    repo: 'SimdGcdrNet',
+    category: 'inference',
+    featured: true,
+    page: '/simdgcdrnet',
+    tagline: {
+      zh: '纯 C# 的 GCDRNet 文档去阴影/外观增强库：自带 ONNX 图编译器与手写 SIMD 内核，零第三方推理引擎，支持 Vulkan / Metal / WASM。',
+      en: 'Pure-C# GCDRNet document shadow removal & appearance enhancement: bundled ONNX graph compiler, hand-written SIMD kernels, zero inference-engine deps; Vulkan / Metal / WASM.',
+    },
+    tags: ['Document', 'Shadow removal', 'SIMD', 'WASM', 'Vulkan', 'Metal'],
+    nuget: ['Sdcb.SimdGcdrNet'],
+  },
+  {
     repo: 'PaddleSharp',
     category: 'inference',
     featured: true,

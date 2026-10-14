@@ -7,3 +7,6 @@ src/data/generated/
 public/ocr/_framework/
 ocr-wasm/**/bin/
 ocr-wasm/**/obj/
+public/gcdr/_framework/
+gcdr-wasm/**/bin/
+gcdr-wasm/**/obj/

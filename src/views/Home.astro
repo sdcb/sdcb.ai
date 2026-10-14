@@ -10,7 +10,7 @@ import { href, t, fmtNumber, type Lang } from '../i18n';
 import { site } from '../data/site';
 import { projects } from '../data/projects';
 import { posts, series } from '../data/writing';
-import { release, repo, nugetDownloads, dockerPulls } from '../data/snapshot';
+import { release, repo, nugetDownloads } from '../data/snapshot';
 import { qqGroups } from '../data/community';
 
 interface Props {
@@ -20,7 +20,7 @@ const { lang } = Astro.props;
 const L = (zh: string, en: string) => t(lang, { zh, en });
 
 const ocrRelease = release('SimdPaddleOCR');
-const chatsRelease = release('chats');
+const gcdrRelease = release('SimdGcdrNet');
 const featured = ['PaddleSharp', 'OpenVINO.NET', 'Sdcb.FFmpeg', 'Sdcb.Arithmetic', 'csharp-runner', 'sdmap'].map(
   (name) => projects.find((p) => p.repo === name)!,
 );
@@ -174,7 +174,22 @@ const evolution = [
       </article>
 
       <div class="grid gap-5">
-        <a href={href(lang, '/wubi')} class="card group flex items-center gap-5 p-6" data-reveal style="--delay:80ms">
+        <a href={href(lang, '/simdgcdrnet')} class="card group flex items-center gap-5 p-6" data-reveal style="--delay:80ms">
+          <span class="grid size-14 shrink-0 place-items-center rounded-xl bg-[#8f7bff] text-3xl font-semibold text-white shadow-lg shadow-[#8f7bff]/30">影</span>
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="chip border-accent/40 text-accent">{L('1.0 新发布', '1.0 new')}</span>
+              <h3 class="font-mono font-semibold">SimdGcdrNet</h3>
+              {gcdrRelease && <span class="chip">latest {gcdrRelease.tag}</span>}
+            </div>
+            <p class="mt-1.5 text-sm text-fg-soft">
+              {L('纯 C# 的文档照片去阴影增强，零第三方推理引擎；还能编成多线程 WASM，直接在浏览器里试。', 'Pure-C# document shadow removal, zero inference-engine deps — compiles to multithreaded WASM, try it in your browser.')}
+            </p>
+          </div>
+          <Icon name="arrowRight" class="shrink-0 text-fg-mute transition-transform group-hover:translate-x-0.5 group-hover:text-fg" />
+        </a>
+
+        <a href={href(lang, '/wubi')} class="card group flex items-center gap-5 p-6" data-reveal style="--delay:160ms">
           <span class="grid size-14 shrink-0 place-items-center rounded-xl bg-[#e0475b] text-3xl font-semibold text-white shadow-lg shadow-[#e0475b]/30">五</span>
           <div class="min-w-0">
             <div class="flex items-center gap-2">
@@ -188,7 +203,7 @@ const evolution = [
           <Icon name="arrowRight" class="shrink-0 text-fg-mute transition-transform group-hover:translate-x-0.5 group-hover:text-fg" />
         </a>
 
-        <a href={href(lang, '/hymt2sharp')} class="card group flex items-center gap-5 p-6" data-reveal style="--delay:160ms">
+        <a href={href(lang, '/hymt2sharp')} class="card group flex items-center gap-5 p-6" data-reveal style="--delay:240ms">
           <span class="grid size-14 shrink-0 place-items-center rounded-xl bg-[#2f6fdc] text-3xl font-semibold text-white shadow-lg shadow-[#2f6fdc]/30">译</span>
           <div class="min-w-0">
             <div class="flex items-center gap-2">
@@ -202,20 +217,6 @@ const evolution = [
           <Icon name="arrowRight" class="shrink-0 text-fg-mute transition-transform group-hover:translate-x-0.5 group-hover:text-fg" />
         </a>
 
-        <a href={href(lang, '/chats')} class="card group flex items-center gap-5 p-6" data-reveal style="--delay:240ms">
-          <div class="min-w-0 flex-1">
-            <div class="flex flex-wrap items-center gap-2">
-              <h3 class="font-mono font-semibold">Sdcb Chats</h3>
-              {chatsRelease && <span class="chip">latest {chatsRelease.name}</span>}
-            </div>
-            <p class="mt-1.5 text-sm text-fg-soft">{L('大模型前端与 AI 网关，持续维护中。', 'LLM front-end and AI gateway, actively maintained.')}</p>
-            <div class="mt-2 flex gap-4 font-mono text-xs text-fg-mute">
-              <span><b class="text-fg">{fmtNumber(dockerPulls(['chats']), lang)}</b> {L('次 Docker 拉取', 'Docker pulls')}</span>
-              <span><b class="text-fg" data-repo-stars="chats">{fmtNumber(repo('chats')?.stars ?? 0, 'en')}</b> Stars</span>
-            </div>
-          </div>
-          <Icon name="arrowRight" class="shrink-0 text-fg-mute transition-transform group-hover:translate-x-0.5 group-hover:text-fg" />
-        </a>
       </div>
     </div>
   </section>

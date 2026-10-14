@@ -1,0 +1,86 @@
+---
+import { t, type Lang } from '../i18n';
+
+interface Props {
+  before: string;
+  after: string;
+  alt: string;
+  width: number;
+  height: number;
+  lang: Lang;
+  class?: string;
+}
+const { before, after, alt, width, height, lang, class: cls = '' } = Astro.props;
+const lBefore = t(lang, { zh: '原图', en: 'Original' });
+const lAfter = t(lang, { zh: '增强', en: 'Enhanced' });
+const aria = t(lang, { zh: '拖动对比原图与增强效果', en: 'Drag to compare original and enhanced' });
+---
+
+<figure
+  data-ba
+  class:list={['group relative select-none overflow-hidden rounded-xl border border-line bg-bg-soft', cls]}
+  style="--pos:50%; touch-action: pan-y"
+>
+  <img src={before} alt={alt} {width} {height} loading="lazy" decoding="async" draggable="false" class="block h-auto w-full" />
+  <div class="absolute inset-0" style="clip-path: inset(0 0 0 var(--pos))">
+    <img src={after} alt="" aria-hidden="true" {width} {height} loading="lazy" decoding="async" draggable="false" class="block h-full w-full" />
+  </div>
+  <span class="pointer-events-none absolute top-3 left-3 rounded bg-black/55 px-2 py-0.5 font-mono text-[11px] text-white/90 backdrop-blur-sm">
+    {lBefore}
+  </span>
+  <span class="pointer-events-none absolute top-3 right-3 rounded bg-black/55 px-2 py-0.5 font-mono text-[11px] text-white/90 backdrop-blur-sm">
+    {lAfter}
+  </span>
+  <div class="pointer-events-none absolute inset-y-0 left-[var(--pos)] w-px -translate-x-1/2 bg-white/80 shadow-[0_0_10px_rgba(0,0,0,0.55)]"></div>
+  <button
+    type="button"
+    data-ba-handle
+    role="slider"
+    tabindex="0"
+    aria-label={aria}
+    aria-valuemin="0"
+    aria-valuemax="100"
+    aria-valuenow="50"
+    class="absolute top-1/2 left-[var(--pos)] z-10 flex size-9 -translate-x-1/2 -translate-y-1/2 cursor-ew-resize items-center justify-center rounded-full border border-white/60 bg-black/50 text-white shadow-lg backdrop-blur transition-colors hover:bg-black/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+  >
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="m9 7-5 5 5 5M15 7l5 5-5 5"></path>
+    </svg>
+  </button>
+</figure>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-ba]').forEach((root) => {
+    const handle = root.querySelector<HTMLElement>('[data-ba-handle]')!;
+    let pos = 50;
+    const set = (p: number) => {
+      pos = Math.min(97, Math.max(3, p));
+      root.style.setProperty('--pos', `${pos}%`);
+      handle.setAttribute('aria-valuenow', String(Math.round(pos)));
+    };
+    const from = (e: PointerEvent) => ((e.clientX - root.getBoundingClientRect().left) / root.clientWidth) * 100;
+
+    let dragging = false;
+    root.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      root.setPointerCapture(e.pointerId);
+      set(from(e));
+    });
+    root.addEventListener('pointermove', (e) => {
+      if (dragging) set(from(e));
+    });
+    root.addEventListener('pointerup', () => (dragging = false));
+    root.addEventListener('pointercancel', () => (dragging = false));
+
+    handle.addEventListener('keydown', (e) => {
+      const step = e.shiftKey ? 10 : 2;
+      if (e.key === 'ArrowLeft') set(pos - step);
+      else if (e.key === 'ArrowRight') set(pos + step);
+      else if (e.key === 'Home') set(3);
+      else if (e.key === 'End') set(97);
+      else return;
+      e.preventDefault();
+    });
+    handle.addEventListener('click', (e) => e.stopPropagation());
+  });
+</script>
